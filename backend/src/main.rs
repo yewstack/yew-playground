@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::error_handling::HandleErrorLayer;
@@ -12,14 +13,17 @@ use tower::ServiceBuilder;
 
 use response::Bson;
 use crate::errors::ApiError;
+use lazy_static::lazy_static;
 
 mod response;
 mod errors;
 
-const APP_DIR: &str = match option_env!("APP_DIR") {
-    None => "../app",
-    Some(v) => v,
-};
+
+lazy_static! {
+    static ref APP_DIR: String = std::env::var("APP_DIR").unwrap_or_else(|_| "../app".to_string());
+    static ref TRUNK_BIN: String = std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
+    static ref PORT: u16 = std::env::var("PORT").ok().and_then(|it| it.parse().ok()).unwrap_or_else(|| 3000);
+}
 
 #[derive(Deserialize)]
 struct RunPayload {
@@ -35,10 +39,10 @@ struct RunResponse {
 
 
 async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError> {
-    let app_dir = fs::canonicalize(APP_DIR).await?;
+    let app_dir = fs::canonicalize(&*APP_DIR).await?;
 
     fs::write(app_dir.join("src/main.rs"), &body.main_contents).await?;
-    let output = Command::new("/home/hamza/bin/trunk")
+    let output = Command::new(&*TRUNK_BIN)
         .arg("build")
         .arg(app_dir.join("index.html"))
         .arg("--release")
@@ -96,6 +100,9 @@ async fn handle_errors(err: BoxError) -> (StatusCode, String) {
 
 #[tokio::main]
 async fn main() {
+    let _ = &APP_DIR;
+    let _ = &TRUNK_BIN;
+
     // build our application with a single route
     let app = Router::new()
         .route("/hello", get(hello))
@@ -106,9 +113,9 @@ async fn main() {
                 .timeout(Duration::from_secs(10)),
         )
         .layer(GlobalConcurrencyLimitLayer::new(1));
-
+    let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
     // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();

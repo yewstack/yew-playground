@@ -14,3 +14,4 @@ tower = { version = "0.4", features = ["limit", "timeout"] }
 bson = "2"
 mime = "0.3"
 thiserror = "1"
+lazy_static = "1"
