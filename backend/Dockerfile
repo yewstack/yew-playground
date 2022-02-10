@@ -1,17 +1,17 @@
-FROM rust:1.58.1 as builder
+FROM rust:latest as builder
 
 WORKDIR /backend
 
 COPY . .
 
-RUN curl https://raw.githubusercontent.com/hamza1311/waichu/master/.github/workflows/test-build.yml > /dev/null
-
 RUN cargo build --release
 
 EXPOSE 3000
+
 # the app image is built from ../app directory. it contains the build files and the cargo project where we run
 # the trunk build command
-FROM app as runner
+# replace this with thae name of your app container when building locally
+FROM ghcr.io/hamza1311/yew-playground-app as runner
 
 WORKDIR /backend
 
