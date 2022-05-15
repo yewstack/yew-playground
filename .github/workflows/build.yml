@@ -19,6 +19,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
+          token_format: 'access_token'
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
       - name: Login to GitHub Container Registry
@@ -57,6 +58,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
+          token_format: 'access_token'
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
       - name: Login to GitHub Container Registry
