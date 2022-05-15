@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew = { git = "https://github.com/yewstack/yew/" }
+yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
 reqwasm = { version = "0.4", features = ["json"] }
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
