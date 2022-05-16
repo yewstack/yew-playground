@@ -1,11 +1,9 @@
-use std::rc::Rc;
-
 use js_sys::ArrayBuffer;
 use monaco::api::TextModel;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{HtmlDocument, HtmlIFrameElement, RequestMode};
+use web_sys::{HtmlDocument, HtmlIFrameElement};
 use yew::prelude::*;
 
 const INDEX_HTML: &str = r#"
@@ -111,7 +109,7 @@ fn App() -> Html {
                 let payload = RunPayload {
                     main_contents: value,
                 };
-                let resp = reqwasm::http::Request::post("http://localhost:3000/run")
+                let resp = reqwasm::http::Request::post(concat!(env!("BACKEND_URL"), "/run"))
                     .body(serde_json::to_string(&payload).unwrap())
                     .header("Content-Type", "application/json")
                     .send()
@@ -162,7 +160,7 @@ fn App() -> Html {
             <header>
                 <button onclick={on_run_click}>{"run"}</button>
             </header>
-            <CodeEditor options={Rc::new(get_options())} classes="the-editor" model={Some((*modal).clone())} />
+            <CodeEditor options={get_options().to_sys_options()} classes="the-editor" model={Some((*modal).clone())} />
             <iframe ref={iframe_ref.clone()} />
         </>
     }

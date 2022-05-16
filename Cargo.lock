@@ -755,7 +755,7 @@ dependencies = [
 [[package]]
 name = "monaco"
 version = "0.3.0"
-source = "git+https://github.com/hamza1311/rust-monaco?branch=yew-playground#729291c3bc21b70f4abb37489338b2165ff7ec9d"
+source = "git+https://github.com/hamza1311/rust-monaco?branch=yew-playground#f8ae7e4872363f7388b8694ba30c2f4560d62c1d"
 dependencies = [
  "js-sys",
  "paste",

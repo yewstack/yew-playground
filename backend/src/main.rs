@@ -124,7 +124,7 @@ async fn main() {
             std::env::var("RUST_LOG")
                 .unwrap_or_else(|_| "backend=trace,hyper=debug,tower_http=debug".into()),
         ))
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_ansi(std::env::var("ANSI_LOG").is_ok()))
         .init();
 
     debug!(?app_dir);
