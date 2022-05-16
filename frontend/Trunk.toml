@@ -1,4 +1,0 @@
-[[proxy]]
-#backend = "https://playground-iob5vy5ctq-uc.a.run.app"
-backend = "http://localhost:3000"
-rewrite = "/api"

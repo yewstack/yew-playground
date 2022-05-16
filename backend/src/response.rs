@@ -1,14 +1,14 @@
+use axum::http::{header, HeaderValue, StatusCode};
 use axum::{
     body::{self, Full},
     response::{IntoResponse, Response},
 };
-use axum::http::{header, HeaderValue, StatusCode};
 use serde::Serialize;
 
 pub struct Bson<T>(pub T);
 impl<T> IntoResponse for Bson<T>
-    where
-        T: Serialize,
+where
+    T: Serialize,
 {
     fn into_response(self) -> Response {
         let bytes = match bson::to_vec(&self.0) {

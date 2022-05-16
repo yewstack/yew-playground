@@ -10,22 +10,26 @@ use tokio::fs;
 use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
 use tower::ServiceBuilder;
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::{debug};
+use tracing::{debug, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use response::Bson;
 use crate::errors::ApiError;
 use lazy_static::lazy_static;
+use response::Bson;
 
-mod response;
 mod errors;
-
+mod response;
 
 lazy_static! {
     static ref APP_DIR: String = std::env::var("APP_DIR").unwrap_or_else(|_| "../app".to_string());
-    static ref TRUNK_BIN: String = std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
-    static ref PORT: u16 = std::env::var("PORT").ok().and_then(|it| it.parse().ok()).unwrap_or(3000);
+    static ref TRUNK_BIN: String =
+        std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
+    static ref PORT: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|it| it.parse().ok())
+        .unwrap_or(3000);
 }
 
 #[derive(Deserialize)]
@@ -40,13 +44,13 @@ struct RunResponse {
     wasm: Vec<u8>,
 }
 
-
 async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError> {
     let app_dir = fs::canonicalize(&*APP_DIR).await?;
 
     fs::write(app_dir.join("src/main.rs"), &body.main_contents).await?;
     let mut cmd = Command::new(&*TRUNK_BIN);
-    let cmd = cmd.arg("build")
+    let cmd = cmd
+        .arg("build")
         .arg(app_dir.join("index.html"))
         .arg("--release");
     debug!(?cmd, "running command");
@@ -118,7 +122,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "backend=trace,tower_http=debug".into()),
+                .unwrap_or_else(|_| "backend=trace,hyper=debug,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -137,10 +141,11 @@ async fn main() {
                 .timeout(Duration::from_secs(10)),
         )
         .layer(GlobalConcurrencyLimitLayer::new(1))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .layer(CorsLayer::permissive());
 
     let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
-    // run it with hyper on localhost:3000
+    info!("Server running on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

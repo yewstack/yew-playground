@@ -5,7 +5,7 @@ use monaco::api::TextModel;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{HtmlDocument, HtmlIFrameElement};
+use web_sys::{HtmlDocument, HtmlIFrameElement, RequestMode};
 use yew::prelude::*;
 
 const INDEX_HTML: &str = r#"
@@ -87,7 +87,7 @@ struct RunResponse {
 enum State {
     Loading,
     Loaded(RunResponse),
-    Error(String)
+    Error(String),
 }
 
 #[function_component]
@@ -95,7 +95,10 @@ fn App() -> Html {
     let iframe_ref = use_node_ref();
     let data = use_state(|| State::Loading);
 
-    let modal = use_memo(|_| TextModel::create(BASE_CONTENT.trim(), Some("rust"), None).unwrap(), ());
+    let modal = use_memo(
+        |_| TextModel::create(BASE_CONTENT.trim(), Some("rust"), None).unwrap(),
+        (),
+    );
     let on_run_click = {
         let modal = modal.clone();
         let data = data.clone();
@@ -108,7 +111,7 @@ fn App() -> Html {
                 let payload = RunPayload {
                     main_contents: value,
                 };
-                let resp = reqwasm::http::Request::post("/api/run")
+                let resp = reqwasm::http::Request::post("http://localhost:3000/run")
                     .body(serde_json::to_string(&payload).unwrap())
                     .header("Content-Type", "application/json")
                     .send()
@@ -139,9 +142,14 @@ fn App() -> Html {
                     }
                     State::Error(e) => {
                         let document = iframe.content_document().unwrap();
-                        document.body().unwrap().set_inner_html(&format!("<pre><code>{e}</pre></code>"));
+                        document
+                            .body()
+                            .unwrap()
+                            .set_inner_html(&format!("<pre><code>{e}</pre></code>"));
                     }
-                    _ => {gloo::console::log!("loading")}
+                    _ => {
+                        gloo::console::log!("loading")
+                    }
                 }
                 || ()
             },
