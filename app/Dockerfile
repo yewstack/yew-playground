@@ -11,4 +11,4 @@ COPY . .
 
 RUN ls *
 
-RUN trunk build --release --dist /playground
+RUN trunk build --release

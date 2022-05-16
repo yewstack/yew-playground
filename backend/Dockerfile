@@ -17,7 +17,7 @@ WORKDIR /backend
 
 COPY --from=builder /backend/target/release/backend .
 
-ENV APP_DIR="/playground"
+ENV APP_DIR="/app"
 ENV TRUNK_BIN="/usr/bin/trunk"
 
 CMD ["./backend"]

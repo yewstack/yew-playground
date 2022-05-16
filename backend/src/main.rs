@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -10,6 +11,9 @@ use tokio::fs;
 use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
 use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
+use tracing::{debug, trace};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use response::Bson;
 use crate::errors::ApiError;
@@ -42,12 +46,12 @@ async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError
     let app_dir = fs::canonicalize(&*APP_DIR).await?;
 
     fs::write(app_dir.join("src/main.rs"), &body.main_contents).await?;
-    let output = Command::new(&*TRUNK_BIN)
-        .arg("build")
+    let mut cmd = Command::new(&*TRUNK_BIN);
+    let cmd = cmd.arg("build")
         .arg(app_dir.join("index.html"))
-        .arg("--release")
-        .output()
-        .await?;
+        .arg("--release");
+    debug!(?cmd, "running command");
+    let output = cmd.output().await?;
     if !output.status.success() {
         return Err(ApiError::BuildFailed(output))
     }
@@ -98,10 +102,31 @@ async fn handle_errors(err: BoxError) -> (StatusCode, String) {
     }
 }
 
+async fn trunk_version() -> String {
+    Command::new(&*TRUNK_BIN)
+        .arg("--version")
+        .output()
+        .await
+        .map(|v| String::from_utf8_lossy(&v.stdout).to_string())
+        .unwrap_or_else(|_| "failed to get trunk version".to_string())
+}
+
 #[tokio::main]
 async fn main() {
-    let _ = &APP_DIR;
-    let _ = &TRUNK_BIN;
+    let app_dir = &*APP_DIR;
+    let trunk_path = &*TRUNK_BIN;
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG")
+                .unwrap_or_else(|_| "backend=trace,tower_http=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    debug!(?app_dir);
+    let trunk_version = trunk_version().await;
+    debug!(trunk_bin_path = ?trunk_path, trunk_version = ?trunk_version);
 
     // build our application with a single route
     let app = Router::new()
@@ -112,7 +137,9 @@ async fn main() {
                 .layer(HandleErrorLayer::new(handle_errors))
                 .timeout(Duration::from_secs(10)),
         )
-        .layer(GlobalConcurrencyLimitLayer::new(1));
+        .layer(GlobalConcurrencyLimitLayer::new(1))
+        .layer(TraceLayer::new_for_http());
+
     let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
     // run it with hyper on localhost:3000
     axum::Server::bind(&addr)
