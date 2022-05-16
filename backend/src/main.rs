@@ -1,18 +1,17 @@
-use std::borrow::Cow;
 use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::error_handling::HandleErrorLayer;
 use axum::http::StatusCode;
-use axum::routing::get;
-use axum::{routing::post, BoxError, Json, Router};
+use axum::routing::{get, post};
+use axum::{BoxError, Json, Router};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
-use tracing::{debug, trace};
+use tracing::{debug};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use response::Bson;
@@ -26,7 +25,7 @@ mod errors;
 lazy_static! {
     static ref APP_DIR: String = std::env::var("APP_DIR").unwrap_or_else(|_| "../app".to_string());
     static ref TRUNK_BIN: String = std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
-    static ref PORT: u16 = std::env::var("PORT").ok().and_then(|it| it.parse().ok()).unwrap_or_else(|| 3000);
+    static ref PORT: u16 = std::env::var("PORT").ok().and_then(|it| it.parse().ok()).unwrap_or(3000);
 }
 
 #[derive(Deserialize)]
@@ -53,7 +52,7 @@ async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError
     debug!(?cmd, "running command");
     let output = cmd.output().await?;
     if !output.status.success() {
-        return Err(ApiError::BuildFailed(output))
+        return Err(ApiError::BuildFailed(output));
     }
 
     let mut dist = fs::read_dir(app_dir.join("dist")).await?;
@@ -73,9 +72,9 @@ async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError
     }
 
     let body = RunResponse {
-        index_html: index_html.ok_or_else(|| ApiError::BuildFileNotFound("index.html"))?,
-        js: js.ok_or_else(|| ApiError::BuildFileNotFound("index.js"))?,
-        wasm: wasm.ok_or_else(|| ApiError::BuildFileNotFound("index.wasm"))?,
+        index_html: index_html.ok_or(ApiError::BuildFileNotFound("index.html"))?,
+        js: js.ok_or(ApiError::BuildFileNotFound("index.js"))?,
+        wasm: wasm.ok_or(ApiError::BuildFileNotFound("index.wasm"))?,
     };
     Ok(Bson(body))
 }
