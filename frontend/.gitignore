@@ -1,1 +1,3 @@
 /dist
+styles/tailwind.css
+node_modules

@@ -1,0 +1,4 @@
+[[hook]]
+stage = "build"
+command = "npm"
+command_arguments = ["run", "build:tailwind"]
