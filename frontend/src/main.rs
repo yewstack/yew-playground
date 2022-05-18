@@ -2,6 +2,8 @@
 
 mod api;
 mod output;
+mod macros;
+mod utils;
 
 use monaco::api::TextModel;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
@@ -48,16 +50,27 @@ fn App() -> Html {
         }
     };
 
+    let classes = Classes::from("p-3 text-center shadow-lg bg-gray-800 rounded-md flex gap-2 \
+    transition duration-200 ease-in-out hover:bg-gray-900");
+
+    let template_rows = if data.is_some() { "grid-template-rows: 1fr 1fr" } else { "grid-template-rows: 1fr "};
+
     html! {
-        <>
-            <header>
-                <button onclick={on_run_click} class="p-3 text-center shadow-lg">{"Run"}</button>
+        <div class="flex flex-col h-screen">
+            <header class="bg-gray-700 p-3">
+                <button onclick={on_run_click} class={classes}>{icon!("play_arrow", classes!("fill-gray-200"))} {"Run"}</button>
             </header>
-            <CodeEditor options={get_options().to_sys_options()} classes="the-editor" model={Some((*modal).clone())} />
-            if let Some(ref data) = *data {
-                <OutputContainer value={data} />
-            }
-        </>
+            <div class="grid h-full" style={template_rows}>
+                <CodeEditor options={get_options().to_sys_options()} classes="the-editor h-full min-h-0" model={Some((*modal).clone())} />
+                <div class="w-full h-full min-h-0">
+                    if let Some(ref data) = *data {
+                        <OutputContainer value={data} />
+                    } else {
+                        // <div class="h-full bg-gray-600" />
+                    }
+                </div>
+            </div>
+        </div>
     }
 }
 

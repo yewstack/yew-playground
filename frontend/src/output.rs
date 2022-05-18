@@ -60,13 +60,11 @@ pub struct OutputContainerProps {
 
 #[function_component]
 pub fn OutputContainer(props: &OutputContainerProps) -> Html {
-    let fallback= html! { "loading"};
+    let fallback= html! { <div class="h-full bg-gray-600">{"Loading"}</div> };
     html! {
-        <div>
-            <Suspense {fallback}>
-                <Output value={Rc::clone(&props.value)} />
-            </Suspense>
-        </div>
+        <Suspense {fallback}>
+            <Output value={Rc::clone(&props.value)} />
+        </Suspense>
     }
 }
 
@@ -105,6 +103,6 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
     };
 
     Ok(html! {
-        <iframe ref={iframe_ref.clone()} {onload} />
+        <iframe ref={iframe_ref.clone()} {onload} class="w-full h-full border-t-[10px] border-gray-400 border-solid" />
     })
 }

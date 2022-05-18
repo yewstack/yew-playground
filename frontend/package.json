@@ -10,5 +10,8 @@
   "license": "ISC",
   "devDependencies": {
     "tailwindcss": "^3.0.24"
+  },
+  "dependencies": {
+    "@material-design-icons/svg": "^0.10.11"
   }
 }
