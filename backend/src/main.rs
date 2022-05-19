@@ -110,7 +110,7 @@ async fn trunk_version() -> String {
         .arg("--version")
         .output()
         .await
-        .map(|v| String::from_utf8_lossy(&v.stdout).to_string())
+        .map(|v| String::from_utf8_lossy(&v.stdout).trim().to_string())
         .unwrap_or_else(|_| "failed to get trunk version".to_string())
 }
 
@@ -124,7 +124,7 @@ async fn main() {
             std::env::var("RUST_LOG")
                 .unwrap_or_else(|_| "backend=trace,hyper=debug,tower_http=debug".into()),
         ))
-        .with(tracing_subscriber::fmt::layer().with_ansi(std::env::var("ANSI_LOG").is_ok()))
+        .with(tracing_subscriber::fmt::layer().with_ansi(std::env::var("NO_ANSI_LOG").is_err()))
         .init();
 
     debug!(?app_dir);
