@@ -1,0 +1,33 @@
+{
+  "hosting": {
+    "public": "frontend/dist",
+    "target": "playground",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "**/target/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "playground-backend",
+          "region": "us-west1"
+        }
+      }
+    ]
+  },
+  "emulators": {
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": true
+    }
+  }
+}

@@ -6,7 +6,7 @@ on:
       - 'app/**'
       - 'backend/**'
       - 'Cargo.*'
-      - '.github/workflows/build.yml'
+      - '.github/workflows/build-publish-backend.yml'
 
 jobs:
   app:

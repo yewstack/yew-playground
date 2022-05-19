@@ -1,0 +1,56 @@
+name: Build & Deploy Backend
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'frontend/**'
+      - 'Cargo.*'
+      - '.github/workflows/build-publish-frontend.yml'
+
+jobs:
+  app:
+    name: Build and deploy frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          components: rust-src
+          override: true
+          profile: minimal
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "16"
+
+      - uses: jetli/trunk-action@v0.1.0
+        with:
+          version: 'latest'
+
+      - name: Install npm dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Build tailwind
+        run: npm run build:tailwind -- --minify
+        working-directory: frontend
+
+      - name: Build frontend
+        run: trunk build --release
+        env:
+          BACKEND_URL: https://api.play.yew.rs
+        working-directory: frontend
+
+      - name: Deploy to Firebase
+        uses: siku2/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseToken: "${{ secrets.FIREBASE_HOSTING_TOKEN }}"
+          channelId: live
+          targets: playground

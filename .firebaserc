@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "yew-rs"
+  },
+  "targets": {
+    "yew-rs": {
+      "hosting": {
+        "playground": [
+          "yew-playground"
+        ]
+      }
+    }
+  }
+}

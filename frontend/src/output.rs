@@ -7,6 +7,8 @@ use web_sys::{HtmlDocument, HtmlIFrameElement};
 use yew::prelude::*;
 use yew::suspense::{Suspense, use_future_with_deps};
 use crate::api::{self, run::Response};
+use crate::{ActionButtonStateContext, ActionButtonState};
+
 
 const INDEX_HTML: &str = r#"
 <!doctype html>
@@ -75,10 +77,13 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
     }, Rc::clone(&props.value))?;
 
     let iframe_ref = use_node_ref();
+    let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
+
 
     let onload = {
         let iframe_ref = iframe_ref.clone();
         let resp = Rc::clone(&resp);
+        let action_button_state =action_button_state.clone();
 
         move |_| {
             match &*resp {
@@ -99,6 +104,7 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
                         .set_inner_html(&format!("<pre><code>{data}</pre></code>"));
                 }
             };
+            action_button_state.dispatch(ActionButtonState::Enabled);
         }
     };
 
