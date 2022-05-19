@@ -1,10 +1,9 @@
-
+use crate::output::OutputContainer;
+use crate::{icon, ActionButtonState, ActionButtonStateContext};
 use monaco::api::TextModel;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
-use yew::prelude::*;
-use crate::output::OutputContainer;
-use crate::{ActionButtonStateContext, ActionButtonState, icon};
 use std::rc::Rc;
+use yew::prelude::*;
 
 const BASE_CONTENT: &str = r#"
 use yew::prelude::*;
@@ -40,7 +39,7 @@ pub fn App() -> Html {
     let on_run_click = {
         let modal = modal.clone();
         let data = data.clone();
-        let action_button_state =action_button_state.clone();
+        let action_button_state = action_button_state.clone();
         move |_| {
             let value = modal.get_value();
             let data = data.clone();
@@ -49,13 +48,19 @@ pub fn App() -> Html {
         }
     };
 
-    let mut classes = Classes::from("p-3 text-center shadow-lg bg-gray-800 rounded-md flex gap-2 \
-    transition duration-200 ease-in-out disabled:cursor-not-allowed disabled:bg-gray-700");
+    let mut classes = Classes::from(
+        "p-3 text-center shadow-lg bg-gray-800 rounded-md flex gap-2 \
+    transition duration-200 ease-in-out disabled:cursor-not-allowed disabled:bg-gray-700",
+    );
     if !action_button_state.disabled() {
         classes.push("hover:bg-gray-900")
     }
 
-    let template_rows = if data.is_some() { "grid-template-rows: 1fr 1fr" } else { "grid-template-rows: 1fr "};
+    let template_rows = if data.is_some() {
+        "grid-template-rows: 1fr 1fr"
+    } else {
+        "grid-template-rows: 1fr "
+    };
 
     html! {
         <div class="flex flex-col h-screen">

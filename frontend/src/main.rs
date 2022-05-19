@@ -1,19 +1,19 @@
 #![feature(const_option_ext)]
 
 mod api;
-mod output;
-mod macros;
-mod utils;
 mod app;
+mod macros;
+mod output;
+mod utils;
 
-use yew::prelude::*;
-use std::rc::Rc;
 use app::App;
+use std::rc::Rc;
+use yew::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ActionButtonState {
     Enabled,
-    Disabled
+    Disabled,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,7 +40,7 @@ pub type ActionButtonStateContext = UseReducerHandle<ActionButtonStateReducible>
 #[function_component]
 fn Root() -> Html {
     let msg = use_reducer(|| ActionButtonStateReducible {
-        state: ActionButtonState::Enabled
+        state: ActionButtonState::Enabled,
     });
 
     html! {

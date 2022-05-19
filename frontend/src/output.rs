@@ -1,14 +1,13 @@
-use std::rc::Rc;
 use gloo::console::log;
+use std::rc::Rc;
 
+use crate::api::{self, run::Response};
+use crate::{ActionButtonState, ActionButtonStateContext};
 use js_sys::ArrayBuffer;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{HtmlDocument, HtmlIFrameElement};
 use yew::prelude::*;
-use yew::suspense::{Suspense, use_future_with_deps};
-use crate::api::{self, run::Response};
-use crate::{ActionButtonStateContext, ActionButtonState};
-
+use yew::suspense::{use_future_with_deps, Suspense};
 
 const INDEX_HTML: &str = r#"
 <!doctype html>
@@ -56,13 +55,12 @@ fn into_array_buf(slice: &[u8]) -> ArrayBuffer {
 
 #[derive(Properties, PartialEq)]
 pub struct OutputContainerProps {
-    pub value: Rc<str>
+    pub value: Rc<str>,
 }
-
 
 #[function_component]
 pub fn OutputContainer(props: &OutputContainerProps) -> Html {
-    let fallback= html! { <div class="h-full bg-gray-600">{"Loading"}</div> };
+    let fallback = html! { <div class="h-full bg-gray-600">{"Loading"}</div> };
     html! {
         <Suspense {fallback}>
             <Output value={Rc::clone(&props.value)} />
@@ -72,18 +70,17 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
 
 #[function_component]
 pub fn Output(props: &OutputContainerProps) -> HtmlResult {
-    let resp = use_future_with_deps(|value| async move {
-        api::run(&*value).await.unwrap()
-    }, Rc::clone(&props.value))?;
+    let resp = use_future_with_deps(
+        |value| async move { api::run(&*value).await.unwrap() },
+        Rc::clone(&props.value),
+    )?;
 
     let iframe_ref = use_node_ref();
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
-
     let onload = {
         let iframe_ref = iframe_ref.clone();
         let resp = Rc::clone(&resp);
-        let action_button_state =action_button_state.clone();
 
         move |_| {
             match &*resp {

@@ -1,9 +1,8 @@
-use std::rc::Rc;
-use serde::{Deserialize, Serialize};
-use gloo_net::http::Request;
-use anyhow::Result;
 use crate::api::BACKEND_URL;
-
+use anyhow::Result;
+use gloo_net::http::Request;
+use serde::{Deserialize, Serialize};
+use std::rc::Rc;
 
 #[derive(Serialize)]
 struct RunPayload<'a> {
@@ -20,7 +19,7 @@ pub struct RunResponse {
 #[derive(Debug, PartialEq)]
 pub enum Response {
     Render(RunResponse),
-    CompileError(String)
+    CompileError(String),
 }
 
 pub async fn run(value: &str) -> Result<Rc<Response>> {
