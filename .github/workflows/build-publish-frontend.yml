@@ -48,9 +48,11 @@ jobs:
         working-directory: frontend
 
       - name: Deploy to Firebase
-        uses: siku2/action-hosting-deploy@v0
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseToken: "${{ secrets.FIREBASE_HOSTING_TOKEN }}"
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_YEW_RS }}'
           channelId: live
-          targets: playground
+          projectId: yew-rs
+        env:
+          FIREBASE_CLI_PREVIEWS: hostingchannels
