@@ -132,7 +132,7 @@ async fn main() {
     debug!(trunk_bin_path = ?trunk_path, trunk_version = ?trunk_version);
 
     // build our application with a single route
-    let app = Router::new()
+    let api = Router::new()
         .route("/hello", get(hello))
         .route("/run", post(run))
         .layer(
@@ -141,8 +141,9 @@ async fn main() {
                 .timeout(Duration::from_secs(10)),
         )
         .layer(GlobalConcurrencyLimitLayer::new(1))
-        .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive());
+        .layer(TraceLayer::new_for_http());
+
+    let app = Router::new().nest("/api", api);
 
     let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
     info!("Server running on {}", addr);

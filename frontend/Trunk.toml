@@ -1,3 +1,6 @@
+[[proxy]]
+backend = "http://localhost:3000/api"
+
 [[hook]]
 stage = "build"
 command = "npm"
