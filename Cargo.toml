@@ -1,6 +1,8 @@
 [workspace]
 members = [
+    "services/app-compiler",
     "services/backend",
+    "services/common",
     "frontend",
 ]
 exclude = [

@@ -1,35 +1,31 @@
 use std::net::SocketAddr;
-use std::time::Duration;
 
-use axum::error_handling::HandleErrorLayer;
-use axum::http::StatusCode;
 use axum::routing::{get, post};
-use axum::{BoxError, Json, Router};
+use axum::{Json, Router};
+use axum::body::{Body};
+use axum::response::Response;
 use serde::{Deserialize, Serialize};
-use tokio::fs;
-use tokio::process::Command;
-use tower::limit::GlobalConcurrencyLimitLayer;
-use tower::ServiceBuilder;
-use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::{debug, info};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use crate::errors::ApiError;
+use tracing::{info};
+use reqwest::{Client, ResponseBuilderExt};
+use anyhow::Error;
+use errors::ApiError;
 use lazy_static::lazy_static;
 use response::Bson;
 
-mod errors;
-mod response;
+use common::{errors, init_tracing};
+use common::response;
 
 lazy_static! {
-    static ref APP_DIR: String = std::env::var("APP_DIR").unwrap_or_else(|_| "../app".to_string());
-    static ref TRUNK_BIN: String =
-        std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
     static ref PORT: u16 = std::env::var("PORT")
         .ok()
         .and_then(|it| it.parse().ok())
         .unwrap_or(3000);
+
+    static ref COMPILER_URL: String = std::env::var("COMPILER_URL")
+        .expect("COMPILER_URL must be set");
+
+    static ref CLINET: Client = Client::new();
 }
 
 #[derive(Deserialize)]
@@ -44,43 +40,30 @@ struct RunResponse {
     wasm: Vec<u8>,
 }
 
-async fn run(Json(body): Json<RunPayload>) -> Result<Bson<RunResponse>, ApiError> {
-    let app_dir = fs::canonicalize(&*APP_DIR).await?;
+async fn run(Json(body): Json<RunPayload>) -> Result<Response<Body>, ApiError> {
+    let client = &*CLINET;
+    // let res = client.get("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity")
+    //     .query(&[("audience", &*COMPILER_URL)])
+    //     .header("Metadata-Flavor", "Google")
+    //     .send()
+    //     .await
+    //     .expect("can't authenticate with Google metadata server. something horribly gone wrong");
 
-    fs::write(app_dir.join("src/main.rs"), &body.main_contents).await?;
-    let mut cmd = Command::new(&*TRUNK_BIN);
-    let cmd = cmd
-        .arg("build")
-        .arg(app_dir.join("index.html"))
-        .arg("--release");
-    debug!(?cmd, "running command");
-    let output = cmd.output().await?;
-    if !output.status.success() {
-        return Err(ApiError::BuildFailed(output));
-    }
+    // let token = res.text().await.map_err(Error::from)?;
+    let mut res = client.post(format!("{}/run", *COMPILER_URL))
+        .body(body.main_contents)
+        // .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .map_err(Error::from)?;
 
-    let mut dist = fs::read_dir(app_dir.join("dist")).await?;
-    let mut index_html = None;
-    let mut js = None;
-    let mut wasm = None;
-    while let Some(file) = dist.next_entry().await? {
-        let filename = file.file_name();
-        let filename = filename.to_string_lossy();
-        if filename.ends_with(".html") {
-            index_html = Some(fs::read_to_string(file.path()).await?);
-        } else if filename.ends_with(".js") {
-            js = Some(fs::read_to_string(file.path()).await?);
-        } else if filename.ends_with(".wasm") {
-            wasm = Some(fs::read(file.path()).await?);
-        }
-    }
+    let mut response = Response::builder();
+    response.headers_mut().replace(res.headers_mut());
 
-    let body = RunResponse {
-        index_html: index_html.ok_or(ApiError::BuildFileNotFound("index.html"))?,
-        js: js.ok_or(ApiError::BuildFileNotFound("index.js"))?,
-        wasm: wasm.ok_or(ApiError::BuildFileNotFound("index.wasm"))?,
-    };
-    Ok(Bson(body))
+    let response = response.status(res.status())
+        .url(res.url().clone())
+        .body(Body::from(res.bytes().await.map_err(Error::from)?)).map_err(Error::from)?;
+    Ok(response)
 }
 
 async fn hello() -> Bson<RunResponse> {
@@ -91,56 +74,14 @@ async fn hello() -> Bson<RunResponse> {
     })
 }
 
-async fn handle_errors(err: BoxError) -> (StatusCode, String) {
-    if err.is::<tower::timeout::error::Elapsed>() {
-        (
-            StatusCode::REQUEST_TIMEOUT,
-            "Request took too long".to_string(),
-        )
-    } else {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Unhandled internal error: {}", err),
-        )
-    }
-}
-
-async fn trunk_version() -> String {
-    Command::new(&*TRUNK_BIN)
-        .arg("--version")
-        .output()
-        .await
-        .map(|v| String::from_utf8_lossy(&v.stdout).trim().to_string())
-        .unwrap_or_else(|_| "failed to get trunk version".to_string())
-}
 
 #[tokio::main]
 async fn main() {
-    let app_dir = &*APP_DIR;
-    let trunk_path = &*TRUNK_BIN;
+    init_tracing();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "backend=trace,hyper=debug,tower_http=debug".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer().with_ansi(std::env::var("NO_ANSI_LOG").is_err()))
-        .init();
-
-    debug!(?app_dir);
-    let trunk_version = trunk_version().await;
-    debug!(trunk_bin_path = ?trunk_path, trunk_version = ?trunk_version);
-
-    // build our application with a single route
     let api = Router::new()
         .route("/hello", get(hello))
         .route("/run", post(run))
-        .layer(
-            ServiceBuilder::new()
-                .layer(HandleErrorLayer::new(handle_errors))
-                .timeout(Duration::from_secs(10)),
-        )
-        .layer(GlobalConcurrencyLimitLayer::new(1))
         .layer(TraceLayer::new_for_http());
 
     let app = Router::new().nest("/api", api);

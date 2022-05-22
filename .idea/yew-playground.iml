@@ -5,7 +5,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/app/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/frontend/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/app-compiler/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/backend/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/common/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/app/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/frontend/target" />

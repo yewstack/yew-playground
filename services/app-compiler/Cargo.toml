@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "app-compiler"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,12 +11,10 @@ tokio = { version = "1.16", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower = { version = "0.4", features = ["limit", "timeout"] }
-bson = "2"
-thiserror = "1"
 lazy_static = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.3.0", features = ["trace", "cors"] }
-reqwest = { version = "0.11.10", features = ["json", "stream"] }
-anyhow = "1"
+
 common = { path = "../common" }
+hyper = "*"
