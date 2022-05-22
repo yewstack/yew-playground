@@ -27,7 +27,7 @@ jobs:
           token_format: 'access_token'
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Google Artifacts Registry
         uses: docker/login-action@v1
         with:
           registry: us-docker.pkg.dev/
@@ -66,7 +66,7 @@ jobs:
           token_format: 'access_token'
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Google Artifacts Registry
         uses: docker/login-action@v1
         with:
           registry: us-docker.pkg.dev/
@@ -83,3 +83,12 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-cloudrun@v0'
+        with:
+          service: 'playground-backend'
+          image: us-docker.pkg.dev/yew-rs/yew-playground/playground:latest
+
+      - name: Deploy URL
+        run: echo ${{ steps.deploy.outputs.url }}
