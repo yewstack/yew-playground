@@ -15,7 +15,7 @@ FROM us-docker.pkg.dev/yew-rs/yew-playground/app:latest as runner
 
 WORKDIR /backend
 
-COPY --from=builder /backend/target/release/backend .
+COPY --from=builder /services/backend/target/release/backend .
 
 ENV APP_DIR="/app"
 ENV TRUNK_BIN="/usr/bin/trunk"
