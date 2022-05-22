@@ -1,8 +1,13 @@
 FROM rust:latest as builder
 
-WORKDIR /compiler
+WORKDIR /
 
-COPY . .
+# Context must be services dir
+
+COPY ./app-compiler /
+COPY ./common /
+
+WORKDIR /app-compiler
 
 RUN cargo build --release
 
@@ -12,9 +17,9 @@ RUN cargo build --release
 # replace this with thae name of your app container when building locally
 FROM us-docker.pkg.dev/yew-rs/yew-playground/app:latest as runner
 
-WORKDIR /compiler
+WORKDIR /app-compiler
 
-COPY --from=builder /compiler/target/release/app-compiler .
+COPY --from=builder /app-compiler/target/release/app-compiler .
 
 ENV APP_DIR="/app"
 ENV TRUNK_BIN="/usr/bin/trunk"

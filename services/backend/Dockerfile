@@ -1,12 +1,15 @@
 FROM rust:latest as builder
 
+WORKDIR /
+
+# Context must be services dir
+
+COPY ./common /
+COPY ./backend /
+
 WORKDIR /backend
 
-COPY . .
-
 RUN cargo build --release
-
-
 
 FROM gcr.io/distroless/cc
 
