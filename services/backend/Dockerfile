@@ -4,8 +4,8 @@ WORKDIR /
 
 # Context must be services dir
 
-COPY ./common /
-COPY ./backend /
+COPY ./common /common
+COPY ./backend /backend
 
 WORKDIR /backend
 
@@ -15,6 +15,6 @@ FROM gcr.io/distroless/cc
 
 EXPOSE 3000
 
-COPY --from=builder /services/backend/target/release/backend /
+COPY --from=builder /backend/target/release/backend /
 
 CMD ["/backend"]

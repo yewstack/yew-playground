@@ -4,8 +4,8 @@ WORKDIR /
 
 # Context must be services dir
 
-COPY ./app-compiler /
-COPY ./common /
+COPY ./app-compiler /app-compiler
+COPY ./common /common
 
 WORKDIR /app-compiler
 
