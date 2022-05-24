@@ -1,4 +1,3 @@
-use crate::api::BACKEND_URL;
 use anyhow::Result;
 use gloo_net::http::Request;
 use serde::{Deserialize, Serialize};
@@ -26,7 +25,7 @@ pub async fn run(value: &str) -> Result<Rc<Response>> {
     let payload = RunPayload {
         main_contents: value,
     };
-    let resp = Request::post(&format!("{BACKEND_URL}/run"))
+    let resp = Request::post("/api/run")
         .body(serde_json::to_string(&payload).unwrap())
         .header("Content-Type", "application/json")
         .send()

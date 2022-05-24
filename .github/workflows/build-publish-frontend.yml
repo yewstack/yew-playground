@@ -43,8 +43,6 @@ jobs:
 
       - name: Build frontend
         run: trunk build --release
-        env:
-          BACKEND_URL: https://api.play.yew.rs/api
         working-directory: frontend
 
       - name: Deploy to Firebase
