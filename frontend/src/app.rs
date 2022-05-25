@@ -72,8 +72,6 @@ pub fn App() -> Html {
                 <div class="w-full h-full min-h-0">
                     if let Some(ref data) = *data {
                         <OutputContainer value={data} />
-                    } else {
-                        // <div class="h-full bg-gray-600" />
                     }
                 </div>
             </div>

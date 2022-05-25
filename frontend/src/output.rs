@@ -71,7 +71,7 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
 #[function_component]
 pub fn Output(props: &OutputContainerProps) -> HtmlResult {
     let resp = use_future_with_deps(
-        |value| async move { api::run(&*value).await.unwrap() },
+        |value| async move { api::run(&*value).await },
         Rc::clone(&props.value),
     )?;
 
@@ -80,18 +80,17 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
 
     let onload = {
         let iframe_ref = iframe_ref.clone();
-        let resp = Rc::clone(&resp);
 
         move |_| {
             match &*resp {
-                Response::Render(data) => {
+                Ok(Response::Render { js, wasm, index_html: _ }) => {
                     let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
 
-                    let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &data.js);
-                    let buf = into_array_buf(&data.wasm);
+                    let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", js);
+                    let buf = into_array_buf(wasm);
                     load_into_iframe(iframe, index_html, &buf);
                 }
-                Response::CompileError(data) => {
+                Ok(Response::CompileError(data)) => {
                     let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
 
                     let document = iframe.content_document().unwrap();
@@ -99,7 +98,8 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
                         .body()
                         .unwrap()
                         .set_inner_html(&format!("<pre><code>{data}</pre></code>"));
-                }
+                },
+                Err(e) => gloo::console::error!(e.to_string()),
             };
             action_button_state.dispatch(ActionButtonState::Enabled);
         }

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use gloo_net::http::Request;
 use serde::{Deserialize, Serialize};
 use std::rc::Rc;
@@ -15,13 +15,19 @@ pub struct RunResponse {
     pub wasm: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Response {
-    Render(RunResponse),
+    #[serde(rename = "output")]
+    Render {
+        index_html: String,
+        js: String,
+        wasm: Vec<u8>,
+    },
     CompileError(String),
 }
 
-pub async fn run(value: &str) -> Result<Rc<Response>> {
+pub async fn run(value: &str) -> Result<Response> {
     let payload = RunPayload {
         main_contents: value,
     };
@@ -31,14 +37,13 @@ pub async fn run(value: &str) -> Result<Rc<Response>> {
         .send()
         .await?;
 
-    let resp = if resp.status() == 200 {
+    let status = resp.status();
+    if status == 200 {
         let bin = resp.binary().await.unwrap();
-        let resp = bson::from_slice::<RunResponse>(&bin)?;
-        Response::Render(resp)
+        let resp = bson::from_slice::<Response>(&bin)?;
+        Ok(resp)
     } else {
         let err = resp.text().await?;
-        Response::CompileError(err)
-    };
-
-    Ok(Rc::new(resp))
+        Err(anyhow!("{}: {}", status, err))
+    }
 }

@@ -28,14 +28,18 @@ lazy_static! {
         .unwrap_or(4000);
 }
 
-#[derive(Serialize)]
-struct RunResponse {
-    index_html: String,
-    js: String,
-    wasm: Vec<u8>,
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Response {
+    Output {
+        index_html: String,
+        js: String,
+        wasm: Vec<u8>,
+    },
+    CompileError(String),
 }
 
-async fn run(RawBody(body): RawBody) -> Result<Bson<RunResponse>, ApiError> {
+async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
     let body = hyper::body::to_bytes(body).await.unwrap();
     if body.is_empty() {
         return Err(ApiError::NoBody)
@@ -51,7 +55,7 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<RunResponse>, ApiError> {
     debug!(?cmd, "running command");
     let output = cmd.output().await?;
     if !output.status.success() {
-        return Err(ApiError::BuildFailed(output));
+        return Ok(Bson(Response::CompileError(String::from_utf8_lossy(&output.stderr).to_string())));
     }
 
     let dist = app_dir.join("dist");
@@ -59,7 +63,7 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<RunResponse>, ApiError> {
     let js = fs::read_to_string(dist.join("app.js")).await?;
     let wasm = fs::read(dist.join("app_bg.wasm")).await?;
 
-    Ok(Bson(RunResponse {
+    Ok(Bson(Response::Output {
         index_html,
         js,
         wasm,
