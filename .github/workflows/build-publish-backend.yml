@@ -50,6 +50,7 @@ jobs:
         uses: 'google-github-actions/deploy-cloudrun@v0'
         with:
           service: 'playground-backend'
+          region: us-west1
           image: us-docker.pkg.dev/yew-rs/yew-playground/playground:latest
 
       - name: Deploy URL

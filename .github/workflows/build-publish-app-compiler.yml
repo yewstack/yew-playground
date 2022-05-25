@@ -82,6 +82,13 @@ jobs:
           push: true
           tags: us-docker.pkg.dev/yew-rs/yew-playground/playground-compiler:latest
 
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-cloudrun@v0'
+        with:
+          service: 'playground-compiler'
+          region: us-west1
+          image: us-docker.pkg.dev/yew-rs/yew-playground/playground-compiler:latest
+
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
