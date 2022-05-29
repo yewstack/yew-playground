@@ -3,8 +3,8 @@
 mod api;
 mod app;
 mod macros;
-mod output;
 mod utils;
+mod components;
 
 use app::App;
 use std::rc::Rc;

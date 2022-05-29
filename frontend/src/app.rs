@@ -1,4 +1,4 @@
-use crate::output::OutputContainer;
+use crate::components::output::OutputContainer;
 use crate::{icon, ActionButtonState, ActionButtonStateContext};
 use monaco::api::TextModel;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
