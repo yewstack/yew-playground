@@ -77,10 +77,13 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
 
     let text_content = use_future_with_deps(
         |query| async move {
-            TextContent::new(query.shared.as_ref().map(|text| {
-                // todo actually fetch things
-                Ok::<_, anyhow::Error>(text.to_string())
-            }))
+            let shared = match &query.shared {
+                Some(text) => {
+                    Some(crate::api::share::get(text).await.map_err(anyhow::Error::from).map(|paste| paste.fields.into_content()))
+                }
+                None => None
+            };
+            TextContent::new(shared)
         },
         query,
     )?;

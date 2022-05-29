@@ -315,6 +315,7 @@ dependencies = [
  "monaco",
  "serde",
  "serde_json",
+ "thiserror",
  "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",

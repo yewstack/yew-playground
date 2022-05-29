@@ -20,6 +20,7 @@ monaco = { git = "https://github.com/hamza1311/rust-monaco", branch = "yew-playg
 bson = "2.1"
 getrandom = { version = "*",  features = ["js"]}
 uuid = { version = "0.8.1", features = ["serde", "v4", "wasm-bindgen"] }
+thiserror = "1.0.31"
 
 [dependencies.web-sys]
 version = "0.3"
