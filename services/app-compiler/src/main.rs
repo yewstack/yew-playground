@@ -2,10 +2,10 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::error_handling::HandleErrorLayer;
-use axum::routing::{post};
-use axum::{Router};
-use axum::extract::{RawBody};
-use serde::{Serialize};
+use axum::extract::RawBody;
+use axum::routing::post;
+use axum::Router;
+use serde::Serialize;
 use tokio::fs;
 use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
@@ -13,13 +13,14 @@ use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, info};
 
-use lazy_static::lazy_static;
-use common::errors::{ApiError, timeout_or_500};
+use common::errors::{timeout_or_500, ApiError};
 use common::init_tracing;
 use common::response::Bson;
+use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref APP_DIR: String = std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string());
+    static ref APP_DIR: String =
+        std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string());
     static ref TRUNK_BIN: String =
         std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
     static ref PORT: u16 = std::env::var("PORT")
@@ -42,7 +43,7 @@ pub enum Response {
 async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
     let body = hyper::body::to_bytes(body).await.unwrap();
     if body.is_empty() {
-        return Err(ApiError::NoBody)
+        return Err(ApiError::NoBody);
     }
     let body = String::from_utf8_lossy(&body);
     let app_dir = fs::canonicalize(&*APP_DIR).await?;
@@ -55,7 +56,9 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
     debug!(?cmd, "running command");
     let output = cmd.output().await?;
     if !output.status.success() {
-        return Ok(Bson(Response::CompileError(String::from_utf8_lossy(&output.stderr).to_string())));
+        return Ok(Bson(Response::CompileError(
+            String::from_utf8_lossy(&output.stderr).to_string(),
+        )));
     }
 
     let dist = app_dir.join("dist");

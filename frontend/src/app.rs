@@ -1,50 +1,30 @@
+use crate::components::editor::Editor;
 use crate::components::output::OutputContainer;
 use crate::{icon, ActionButtonState, ActionButtonStateContext};
-use monaco::api::TextModel;
-use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme, yew::CodeEditor};
 use std::rc::Rc;
 use yew::prelude::*;
-
-const BASE_CONTENT: &str = r#"
-use yew::prelude::*;
-
-#[function_component(App)]
-fn app() -> Html {
-    html! { "hello world" }
-}
-
-fn main() {
-    yew::start_app::<App>();
-}
-"#;
-
-fn get_options() -> CodeEditorOptions {
-    CodeEditorOptions::default()
-        .with_builtin_theme(BuiltinTheme::VsDark)
-        .with_scroll_beyond_last_line(false)
-        .with_automatic_layout(true)
-}
+use yew::suspense::Suspense;
 
 #[function_component]
 pub fn App() -> Html {
+    let editor_contents = use_mut_ref(String::new);
     let data = use_state(|| None);
 
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
-    let modal = use_memo(
-        |_| TextModel::create(BASE_CONTENT.trim(), Some("rust"), None).unwrap(),
-        (),
-    );
-
     let on_run_click = {
-        let modal = modal.clone();
-        let data = data.clone();
         let action_button_state = action_button_state.clone();
+        let editor_contents = editor_contents.clone();
+        let data = data.clone();
         move |_| {
-            let value = modal.get_value();
-            let data = data.clone();
-            data.set(Some(Rc::from(value)));
+            data.set(Some(Rc::from(editor_contents.as_ref().borrow().as_str())));
             action_button_state.dispatch(ActionButtonState::Disabled);
+        }
+    };
+
+    let oninput = {
+        move |v| {
+            *editor_contents.as_ref().borrow_mut() = v;
         }
     };
 
@@ -64,11 +44,17 @@ pub fn App() -> Html {
 
     html! {
         <div class="flex flex-col h-screen">
-            <header class="bg-gray-700 p-3">
-                <button onclick={on_run_click} disabled={action_button_state.disabled()} class={classes}>{icon!("play_arrow", classes!("fill-gray-200"))} {"Run"}</button>
+            <header class="bg-gray-700 p-3 flex justify-between">
+                <button onclick={on_run_click} disabled={action_button_state.disabled()} class={classes.clone()}>{icon!("play_arrow", classes!("fill-gray-200"))} {"Run"}</button>
+
+                <div>
+                    <button disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
+                </div>
             </header>
             <div class="grid h-full" style={template_rows}>
-                <CodeEditor options={get_options().to_sys_options()} classes="the-editor h-full min-h-0" model={Some((*modal).clone())} />
+                <Suspense fallback={{html! {"loading..."}}}>
+                    <Editor {oninput} />
+                </Suspense>
                 <div class="w-full h-full min-h-0">
                     if let Some(ref data) = *data {
                         <OutputContainer value={data} />

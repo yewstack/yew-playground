@@ -1,30 +1,28 @@
 use std::net::SocketAddr;
 
+use anyhow::Error;
+use axum::body::Body;
+use axum::response::Response;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use axum::body::{Body};
-use axum::response::Response;
-use serde::{Deserialize, Serialize};
-use tower_http::trace::TraceLayer;
-use tracing::{info};
-use reqwest::{Client, ResponseBuilderExt};
-use anyhow::Error;
 use errors::ApiError;
 use lazy_static::lazy_static;
+use reqwest::{Client, ResponseBuilderExt};
 use response::Bson;
+use serde::{Deserialize, Serialize};
+use tower_http::trace::TraceLayer;
+use tracing::info;
 
-use common::{errors, init_tracing};
 use common::response;
+use common::{errors, init_tracing};
 
 lazy_static! {
     static ref PORT: u16 = std::env::var("PORT")
         .ok()
         .and_then(|it| it.parse().ok())
         .unwrap_or(3000);
-
-    static ref COMPILER_URL: String = std::env::var("COMPILER_URL")
-        .expect("COMPILER_URL must be set");
-
+    static ref COMPILER_URL: String =
+        std::env::var("COMPILER_URL").expect("COMPILER_URL must be set");
     static ref CLINET: Client = Client::new();
 }
 
@@ -50,7 +48,8 @@ async fn run(Json(body): Json<RunPayload>) -> Result<Response<Body>, ApiError> {
     //     .expect("can't authenticate with Google metadata server. something horribly gone wrong");
 
     // let token = res.text().await.map_err(Error::from)?;
-    let mut res = client.post(format!("{}/run", *COMPILER_URL))
+    let mut res = client
+        .post(format!("{}/run", *COMPILER_URL))
         .body(body.main_contents)
         // .header("Authorization", format!("Bearer {}", token))
         .send()
@@ -60,9 +59,11 @@ async fn run(Json(body): Json<RunPayload>) -> Result<Response<Body>, ApiError> {
     let mut response = Response::builder();
     response.headers_mut().replace(res.headers_mut());
 
-    let response = response.status(res.status())
+    let response = response
+        .status(res.status())
         .url(res.url().clone())
-        .body(Body::from(res.bytes().await.map_err(Error::from)?)).map_err(Error::from)?;
+        .body(Body::from(res.bytes().await.map_err(Error::from)?))
+        .map_err(Error::from)?;
     Ok(response)
 }
 
@@ -73,7 +74,6 @@ async fn hello() -> Bson<RunResponse> {
         wasm: "wasm".as_bytes().to_vec(),
     })
 }
-
 
 #[tokio::main]
 async fn main() {

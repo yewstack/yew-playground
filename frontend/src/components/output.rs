@@ -83,7 +83,11 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
 
         move |_| {
             match &*resp {
-                Ok(Response::Render { js, wasm, index_html: _ }) => {
+                Ok(Response::Render {
+                    js,
+                    wasm,
+                    index_html: _,
+                }) => {
                     let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
 
                     let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", js);
@@ -98,7 +102,7 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
                         .body()
                         .unwrap()
                         .set_inner_html(&format!("<pre><code>{data}</pre></code>"));
-                },
+                }
                 Err(e) => gloo::console::error!(e.to_string()),
             };
             action_button_state.dispatch(ActionButtonState::Enabled);

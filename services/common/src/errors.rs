@@ -1,9 +1,9 @@
 use std::process::Output;
 
-use axum::{body, BoxError};
 use axum::body::Full;
 use axum::http::{header, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
+use axum::{body, BoxError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
@@ -16,7 +16,7 @@ pub enum ApiError {
     #[error("build failed with error {}\n{}", .0.status, String::from_utf8_lossy(&.0.stderr))]
     BuildFailed(Output),
     #[error(transparent)]
-    Unknown(#[from] anyhow::Error)
+    Unknown(#[from] anyhow::Error),
 }
 
 impl IntoResponse for ApiError {

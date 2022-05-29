@@ -2,13 +2,14 @@
 
 mod api;
 mod app;
+mod components;
 mod macros;
 mod utils;
-mod components;
 
 use app::App;
 use std::rc::Rc;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ActionButtonState {
@@ -39,14 +40,16 @@ pub type ActionButtonStateContext = UseReducerHandle<ActionButtonStateReducible>
 
 #[function_component]
 fn Root() -> Html {
-    let msg = use_reducer(|| ActionButtonStateReducible {
+    let msg = use_reducer_eq(|| ActionButtonStateReducible {
         state: ActionButtonState::Enabled,
     });
 
     html! {
-        <ContextProvider<ActionButtonStateContext> context={msg}>
-            <App />
-        </ContextProvider<ActionButtonStateContext>>
+        <BrowserRouter>
+            <ContextProvider<ActionButtonStateContext> context={msg}>
+                <App />
+            </ContextProvider<ActionButtonStateContext>>
+        </BrowserRouter>
     }
 }
 
