@@ -320,6 +320,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "yew",
+ "yew-router",
 ]
 
 [[package]]
@@ -431,6 +432,7 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa5d6084efa4a2b182ef3a8649cb6506cb4843f22cf907c6e0a799944248ae90"
 dependencies = [
+ "futures-channel",
  "gloo-events",
  "js-sys",
  "wasm-bindgen",
@@ -504,6 +506,8 @@ version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fb7d06c1c8cc2a29bee7ec961009a0b2caa0793ee4900c2ffb348734ba1c8f9"
 dependencies = [
+ "futures-channel",
+ "futures-core",
  "js-sys",
  "wasm-bindgen",
 ]
@@ -1129,6 +1133,12 @@ dependencies = [
  "web-sys",
  "winreg",
 ]
+
+[[package]]
+name = "route-recognizer"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afab94fb28594581f62d981211a9a4d53cc8130bbcbbb89a0440d9b8e81a7746"
 
 [[package]]
 name = "ryu"
@@ -1798,13 +1808,14 @@ dependencies = [
 [[package]]
 name = "yew"
 version = "0.19.3"
-source = "git+https://github.com/yewstack/yew/#b82a5ba56ba2c97fbfe5aa8bb77b352835331b27"
+source = "git+https://github.com/yewstack/yew/#e68060afa7421149f2d6aacace67c65c33e81fe5"
 dependencies = [
  "console_error_panic_hook",
  "gloo",
  "gloo-utils",
  "indexmap",
  "js-sys",
+ "serde",
  "slab",
  "thiserror",
  "wasm-bindgen",
@@ -1816,13 +1827,39 @@ dependencies = [
 [[package]]
 name = "yew-macro"
 version = "0.19.3"
-source = "git+https://github.com/yewstack/yew/#b82a5ba56ba2c97fbfe5aa8bb77b352835331b27"
+source = "git+https://github.com/yewstack/yew/#e68060afa7421149f2d6aacace67c65c33e81fe5"
 dependencies = [
  "boolinator",
  "lazy_static",
  "once_cell",
  "prettyplease",
  "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "yew-router"
+version = "0.16.0"
+source = "git+https://github.com/yewstack/yew/#e68060afa7421149f2d6aacace67c65c33e81fe5"
+dependencies = [
+ "gloo",
+ "js-sys",
+ "route-recognizer",
+ "serde",
+ "serde_urlencoded",
+ "wasm-bindgen",
+ "web-sys",
+ "yew",
+ "yew-router-macro",
+]
+
+[[package]]
+name = "yew-router-macro"
+version = "0.16.0"
+source = "git+https://github.com/yewstack/yew/#e68060afa7421149f2d6aacace67c65c33e81fe5"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn",

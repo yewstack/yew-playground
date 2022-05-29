@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Result};
 use gloo_net::http::Request;
 use serde::{Deserialize, Serialize};
-use std::rc::Rc;
 
 #[derive(Serialize)]
 struct RunPayload<'a> {

@@ -2,13 +2,14 @@
 
 mod api;
 mod app;
+mod components;
 mod macros;
-mod output;
 mod utils;
 
 use app::App;
 use std::rc::Rc;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ActionButtonState {
@@ -44,9 +45,11 @@ fn Root() -> Html {
     });
 
     html! {
-        <ContextProvider<ActionButtonStateContext> context={msg}>
-            <App />
-        </ContextProvider<ActionButtonStateContext>>
+        <BrowserRouter>
+            <ContextProvider<ActionButtonStateContext> context={msg}>
+                <App />
+            </ContextProvider<ActionButtonStateContext>>
+        </BrowserRouter>
     }
 }
 
