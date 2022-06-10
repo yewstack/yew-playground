@@ -1,5 +1,5 @@
-use gloo::console::log;
 use std::rc::Rc;
+use gloo::timers::callback::Timeout;
 
 use crate::api::{self, run::Response};
 use crate::{ActionButtonState, ActionButtonStateContext};
@@ -27,22 +27,27 @@ const INDEX_HTML: &str = r#"
 </html>
 "#;
 
-fn load_into_iframe(iframe: HtmlIFrameElement, index_html: String, buf: &ArrayBuffer) {
-    log!(&iframe);
+const IFRAME_ID: &str = "output-frame";
+
+fn load_into_iframe(iframe: HtmlIFrameElement, index_html: String, buf: ArrayBuffer) {
     let window = iframe.content_window().unwrap();
     let doc = window
         .document()
         .unwrap()
-        .dyn_into::<HtmlDocument>()
-        .unwrap();
+        .unchecked_into::<HtmlDocument>();
     doc.open().unwrap();
     doc.write(&JsValue::from(index_html).into()).unwrap();
     doc.close().unwrap();
-    let init = js_sys::Reflect::get(&window.into(), &"init".into()).unwrap();
-    let init = init.dyn_into::<js_sys::Function>().unwrap();
-    log!(&init);
-    let window = iframe.content_window().unwrap();
-    init.call1(&window.into(), &JsValue::from(buf)).unwrap();
+    // chrome needs this
+    let timeout = Timeout::new(0, move || {
+        let iframe: HtmlIFrameElement = gloo::utils::document().get_element_by_id(IFRAME_ID).unwrap().unchecked_into();
+        let window = iframe.content_window().unwrap();
+        let init = js_sys::Reflect::get(window.as_ref(), &"init".into()).unwrap();
+        let init = init.dyn_into::<js_sys::Function>().unwrap();
+        init.call1(&window.into(), &JsValue::from(buf)).unwrap();
+    });
+    // we need this timeout to finish to completion
+    std::mem::forget(timeout);
 }
 
 fn into_array_buf(slice: &[u8]) -> ArrayBuffer {
@@ -92,7 +97,7 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
 
                     let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", js);
                     let buf = into_array_buf(wasm);
-                    load_into_iframe(iframe, index_html, &buf);
+                    load_into_iframe(iframe, index_html, buf);
                 }
                 Ok(Response::CompileError(data)) => {
                     let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
@@ -110,6 +115,6 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
     };
 
     Ok(html! {
-        <iframe ref={iframe_ref.clone()} {onload} class="w-full h-full border-t-[10px] border-gray-400 border-solid" />
+        <iframe id={IFRAME_ID} ref={iframe_ref.clone()} {onload} class="w-full h-full border-t-[10px] border-gray-400 border-solid" />
     })
 }
