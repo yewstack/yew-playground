@@ -3,14 +3,13 @@ use gloo::console::log;
 use monaco::api::TextModel;
 use monaco::yew::CodeEditor;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme};
-use serde::Deserialize;
 use std::ops::Deref;
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew::suspense::use_future_with_deps;
 use yew::HtmlResult;
-use yew_router::hooks::use_location;
+use crate::utils::query::use_query;
 
 const BASE_CONTENT: &str = r#"
 use yew::prelude::*;
@@ -24,11 +23,6 @@ fn main() {
     yew::start_app::<App>();
 }
 "#;
-
-#[derive(Debug, Deserialize, PartialEq)]
-struct Query {
-    shared: Option<String>,
-}
 
 #[derive(Clone)]
 struct TextContent(Rc<Option<Result<String>>>);
@@ -67,8 +61,7 @@ pub struct EditorProps {
 
 #[function_component]
 pub fn Editor(props: &EditorProps) -> HtmlResult {
-    let location = use_location().unwrap();
-    let query = location.query::<Query>().unwrap();
+    let query = use_query().unwrap();
     log!(query
         .shared
         .as_ref()

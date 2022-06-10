@@ -2,8 +2,10 @@ use crate::components::editor::Editor;
 use crate::components::output::OutputContainer;
 use crate::{icon, ActionButtonState, ActionButtonStateContext};
 use std::rc::Rc;
+use gloo::history::{History, BrowserHistory};
 use yew::prelude::*;
 use yew::suspense::Suspense;
+use crate::utils::query::Query;
 
 #[function_component]
 pub fn App() -> Html {
@@ -19,6 +21,34 @@ pub fn App() -> Html {
         move |_| {
             data.set(Some(Rc::from(editor_contents.as_ref().borrow().as_str())));
             action_button_state.dispatch(ActionButtonState::Disabled);
+        }
+    };
+
+    let on_share_click = {
+        let editor_contents = editor_contents.clone();
+        let action_button_state = action_button_state.clone();
+        move |_| {
+            let action_button_state = action_button_state.clone();
+            let editor_contents = editor_contents.clone();
+
+            // https://tenor.com/view/this-is-fine-fire-house-burning-okay-gif-5263684
+            // this is fine because no one can do anuthing with the refcell while we holding it
+            // alternate is clone, which is expensive
+            #[allow(clippy::await_holding_refcell_ref)]
+            wasm_bindgen_futures::spawn_local(async move {
+                action_button_state.dispatch(ActionButtonState::Disabled);
+                let history = BrowserHistory::new();
+
+                let content = editor_contents.as_ref().borrow();
+                let content = content.as_str();
+                let paste = crate::api::share::create(content).await.expect("fucked up");
+                let id = paste.id();
+                let query = Query {
+                    shared: Some(id),
+                };
+                history.push_with_query("/", query).expect("failed to navigate");
+                action_button_state.dispatch(ActionButtonState::Enabled);
+            })
         }
     };
 
@@ -48,7 +78,7 @@ pub fn App() -> Html {
                 <button onclick={on_run_click} disabled={action_button_state.disabled()} class={classes.clone()}>{icon!("play_arrow", classes!("fill-gray-200"))} {"Run"}</button>
 
                 <div>
-                    <button disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
+                    <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
                 </div>
             </header>
             <div class="grid h-full" style={template_rows}>

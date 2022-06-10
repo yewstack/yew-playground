@@ -1,3 +1,5 @@
+pub mod query;
+
 use yew::virtual_dom::VNode;
 use yew::Classes;
 

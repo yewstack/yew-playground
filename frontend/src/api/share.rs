@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 use anyhow::{anyhow, Context, Result};
 use gloo_net::http::{Request, Response};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 #[cfg(feature = "emulator")]
 const FIRESTORE_URL: &str =
@@ -72,12 +72,6 @@ pub struct PasteDocument {
     #[serde(skip_serializing)]
     name: String,
     pub fields: PasteFields,
-    #[serde(rename = "createTime")]
-    #[serde(skip_serializing)]
-    pub create_time: String,
-    #[serde(rename = "updateTime")]
-    #[serde(skip_serializing)]
-    update_time: String,
 }
 
 impl PasteDocument {
@@ -99,23 +93,16 @@ pub async fn get(id: &str) -> Result<PasteDocument> {
 }
 
 pub async fn create(content: &str) -> Result<PasteDocument> {
-    let doc = PasteDocument {
-        name: String::new(),
-        fields: PasteFields {
-            content: {
-                let mut map = HashMap::with_capacity(1);
-                map.insert(STRING_VALUE.to_string(), content.to_string());
-                map
+    let doc = json!({
+        "fields": {
+            "content": {
+                STRING_VALUE: content
             },
-            created_by: {
-                let mut map = HashMap::with_capacity(1);
-                map.insert(NULL_VALUE.to_string(), None);
-                map
-            },
-        },
-        create_time: String::new(),
-        update_time: String::new(),
-    };
+            "createdBy": {
+                NULL_VALUE: Option::<String>::None
+            }
+        }
+    });
 
     let resp = Request::post(FIRESTORE_URL)
         .json(&doc)?
@@ -123,7 +110,8 @@ pub async fn create(content: &str) -> Result<PasteDocument> {
         .await?;
 
     if (200..300).contains(&resp.status()) {
-        Ok(resp.json().await?)
+        let paste = resp.json::<PasteDocument>().await?;
+        Ok(paste)
     } else {
         return FirestoreError::anyhow_from_response(&resp).await;
     }
