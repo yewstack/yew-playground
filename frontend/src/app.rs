@@ -45,6 +45,7 @@ pub fn App() -> Html {
                 let id = paste.id();
                 let query = Query {
                     shared: Some(id),
+                    code: None,
                 };
                 history.push_with_query("/", query).expect("failed to navigate");
                 action_button_state.dispatch(ActionButtonState::Enabled);

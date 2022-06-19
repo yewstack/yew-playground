@@ -39,6 +39,7 @@ impl TextContent {
     fn new(val: Option<Result<String>>) -> Self {
         Self(Rc::new(val))
     }
+    fn new_with_string(text: String) -> Self { Self::new(Some(Ok(text)))    }
 }
 
 impl PartialEq for TextContent {
@@ -62,14 +63,13 @@ pub struct EditorProps {
 #[function_component]
 pub fn Editor(props: &EditorProps) -> HtmlResult {
     let query = use_query().unwrap();
-    log!(query
-        .shared
-        .as_ref()
-        .map(JsValue::from)
-        .unwrap_or(JsValue::NULL));
 
     let text_content = use_future_with_deps(
         |query| async move {
+            if let Some(code) = &query.code {
+                return TextContent::new_with_string(code.to_string())
+            }
+
             let shared = match &query.shared {
                 Some(text) => {
                     Some(crate::api::share::get(text).await.map_err(anyhow::Error::from).map(|paste| paste.fields.into_content()))

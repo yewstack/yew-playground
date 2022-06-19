@@ -5,6 +5,7 @@ use yew_router::hooks::use_location;
 #[derive(Debug,Serialize, Deserialize, PartialEq)]
 pub struct Query {
     pub shared: Option<String>,
+    pub code: Option<String>,
 }
 
 #[hook]
