@@ -1,12 +1,10 @@
-#![allow(unused)]
-extern crate r#yew;
-fn main() {
 use yew::prelude::*;
 
 #[function_component(App)]
-fn HelloWorld() -> Html {
-    html! { "Hello world" }
+fn app() -> Html {
+    html! { "hello world" }
 }
 
-yew::start_app::<App>();
+fn main() {
+    yew::start_app::<App>();
 }

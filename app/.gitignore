@@ -1,2 +1,5 @@
 /target
 /dist
+# src is in gitignore so local changes are not pushed.
+# If there is need to change the file, following line needs to be removed
+src
