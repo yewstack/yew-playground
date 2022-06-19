@@ -5,6 +5,10 @@
     <title>Yew Playground</title>
 
     <link data-trunk href="styles/tailwind.css" rel="css">
+    <!--We don't use ref="icon" with data-trunk because we want svg favicon-->
+    <link data-trunk href="static" rel="copy-dir">
+    <link rel="icon" href="/static/favicon.ico" sizes="any">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 </head>
 <body class="text-gray-200 h-screen"></body>
 </html>
