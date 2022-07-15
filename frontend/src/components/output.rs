@@ -4,7 +4,7 @@ use gloo::console::console;
 use gloo::timers::callback::Timeout;
 
 use crate::api::{self, run::Response};
-use crate::{ActionButtonState, ActionButtonStateContext};
+use crate::{ActionButtonState, ActionButtonStateContext, rc_type};
 use js_sys::ArrayBuffer;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{HtmlDocument, HtmlIFrameElement};
@@ -82,22 +82,7 @@ enum LoadingState {
     Loaded,
 }
 
-#[derive(Clone)]
-struct ResponseContent(Rc<Result<Response>>);
-
-impl std::ops::Deref for ResponseContent {
-    type Target = Result<Response>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl PartialEq for ResponseContent {
-    fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
-    }
-}
+rc_type!(ResponseContent => Result<Response>);
 
 #[function_component]
 pub fn Output(props: &OutputContainerProps) -> HtmlResult {

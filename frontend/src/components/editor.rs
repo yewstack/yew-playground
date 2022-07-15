@@ -3,12 +3,11 @@ use gloo::console::log;
 use monaco::api::TextModel;
 use monaco::yew::CodeEditor;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme};
-use std::ops::Deref;
 use std::rc::Rc;
-use wasm_bindgen::JsValue;
 use yew::prelude::*;
 use yew::suspense::use_future_with_deps;
 use yew::HtmlResult;
+use crate::rc_type;
 use crate::utils::query::use_query;
 
 const BASE_CONTENT: &str = r#"
@@ -24,28 +23,13 @@ fn main() {
 }
 "#;
 
-#[derive(Clone)]
-struct TextContent(Rc<Option<Result<String>>>);
-
-impl Deref for TextContent {
-    type Target = Option<Result<String>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+rc_type!(TextContent => Option<Result<String>>);
 
 impl TextContent {
     fn new(val: Option<Result<String>>) -> Self {
         Self(Rc::new(val))
     }
     fn new_with_string(text: String) -> Self { Self::new(Some(Ok(text)))    }
-}
-
-impl PartialEq for TextContent {
-    fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
-    }
 }
 
 fn get_options() -> CodeEditorOptions {
