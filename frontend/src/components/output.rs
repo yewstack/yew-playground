@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use anyhow::Result;
+use gloo::console::console;
 use gloo::timers::callback::Timeout;
 
 use crate::api::{self, run::Response};
@@ -35,6 +37,7 @@ fn load_into_iframe(iframe: HtmlIFrameElement, index_html: String, buf: ArrayBuf
         .document()
         .unwrap()
         .unchecked_into::<HtmlDocument>();
+    doc.clear();
     doc.open().unwrap();
     doc.write(&JsValue::from(index_html).into()).unwrap();
     doc.close().unwrap();
@@ -73,31 +76,68 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum LoadingState {
+    Loading,
+    Loaded,
+}
+
+#[derive(Clone)]
+struct ResponseContent(Rc<Result<Response>>);
+
+impl std::ops::Deref for ResponseContent {
+    type Target = Result<Response>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl PartialEq for ResponseContent {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
+
 #[function_component]
 pub fn Output(props: &OutputContainerProps) -> HtmlResult {
     let resp = use_future_with_deps(
-        |value| async move { api::run(&*value).await },
+        |value| async move { Rc::new(api::run(&value).await) },
         Rc::clone(&props.value),
     )?;
+    let resp = ResponseContent(Rc::clone(&*resp));
 
     let iframe_ref = use_node_ref();
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
+    let loaded = use_state_eq(|| LoadingState::Loading);
     let onload = {
+        let loaded = loaded.clone();
+        move |_| {
+            loaded.set(LoadingState::Loaded);
+        }
+    };
+
+    {
         let iframe_ref = iframe_ref.clone();
 
-        move |_| {
-            match &*resp {
+        use_effect_with_deps(move |(resp, loaded)| {
+            let resp = &resp.0;
+            match &**resp {
                 Ok(Response::Render {
-                    js,
-                    wasm,
-                    index_html: _,
-                }) => {
-                    let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
+                       js,
+                       wasm,
+                       index_html: _,
+                   }) => {
+                    console!(format!("{:?}", *loaded));
+                    if matches!(**loaded, LoadingState::Loaded) {
+                        let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
 
-                    let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", js);
-                    let buf = into_array_buf(wasm);
-                    load_into_iframe(iframe, index_html, buf);
+                        let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", js);
+                        let buf = into_array_buf(wasm);
+                        load_into_iframe(iframe, index_html, buf);
+                        loaded.set(LoadingState::Loaded)
+                    }
                 }
                 Ok(Response::CompileError(data)) => {
                     let iframe = iframe_ref.cast::<HtmlIFrameElement>().unwrap();
@@ -111,8 +151,9 @@ pub fn Output(props: &OutputContainerProps) -> HtmlResult {
                 Err(e) => gloo::console::error!(e.to_string()),
             };
             action_button_state.dispatch(ActionButtonState::Enabled);
-        }
-    };
+            || {}
+        }, (ResponseContent::clone(&resp), loaded));
+    }
 
     Ok(html! {
         <iframe id={IFRAME_ID} ref={iframe_ref.clone()} {onload} class="w-full h-full border-t-[10px] border-gray-400 border-solid" />
