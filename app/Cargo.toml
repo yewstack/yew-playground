@@ -11,5 +11,5 @@ wasm-bindgen = "0.2"
 web-sys = "0.3"
 js-sys = "0.3"
 wasm-bindgen-futures = "0.4"
-
+gloo = "0.8.0"
 #monaco = { git = "https://github.com/siku2/rust-monaco/", features = ["yew-components"] }
