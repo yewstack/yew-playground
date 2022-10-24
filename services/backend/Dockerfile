@@ -1,13 +1,14 @@
 FROM rust:latest as builder
 
-WORKDIR /
+WORKDIR /app
 
-# Context must be services dir
+# Context must be repo root
 
-COPY ./common /common
-COPY ./backend /backend
+COPY ./services/common /app/common
+COPY ./services/backend /app/backend
+COPY ./Cargo.toml /app
 
-WORKDIR /backend
+WORKDIR /app/backend
 
 RUN cargo build --release
 
@@ -15,6 +16,6 @@ FROM gcr.io/distroless/cc
 
 EXPOSE 3000
 
-COPY --from=builder /backend/target/release/backend /
+COPY --from=builder /app/backend/target/release/backend /
 
 CMD ["/backend"]
