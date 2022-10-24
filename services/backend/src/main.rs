@@ -1,13 +1,13 @@
 use std::net::SocketAddr;
 
 use anyhow::Error;
-use axum::response::{Html};
-use axum::routing::{get, post};
-use axum::{Router};
 use axum::extract::Query;
+use axum::response::Html;
+use axum::routing::get;
+use axum::Router;
 use errors::ApiError;
 use lazy_static::lazy_static;
-use reqwest::{Client};
+use reqwest::Client;
 use response::Bson;
 use serde::{Deserialize, Serialize};
 use tower_http::trace::TraceLayer;
@@ -59,7 +59,7 @@ const INDEX_HTML: &str = r#"
 async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
     let client = &*CLINET;
 
-    let mut res = client
+    let res = client
         .post(format!("{}/run", *COMPILER_URL))
         .body(body.code)
         .send()
@@ -72,16 +72,18 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
     };
 
     match run_response {
-        common::Response::Output { index_html: _, js, wasm } => {
+        common::Response::Output {
+            index_html: _,
+            js,
+            wasm,
+        } => {
             let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
             println!("{}", index_html);
             let init = format!("init((new Int8Array({:?})).buffer)", wasm);
             let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
             Ok(Html(index_html))
-        },
-        common::Response::CompileError(e) => {
-            Ok(Html(e))
-        },
+        }
+        common::Response::CompileError(e) => Ok(Html(e)),
     }
 }
 

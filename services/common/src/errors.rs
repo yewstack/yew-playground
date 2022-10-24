@@ -22,11 +22,11 @@ pub enum ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let status = match self {
-            ApiError::IoError(_) => (StatusCode::INTERNAL_SERVER_ERROR),
-            ApiError::BuildFileNotFound(_) => (StatusCode::INTERNAL_SERVER_ERROR),
-            ApiError::NoBody => (StatusCode::BAD_REQUEST),
-            ApiError::BuildFailed(_) => (StatusCode::BAD_REQUEST),
-            ApiError::Unknown(_) => (StatusCode::INTERNAL_SERVER_ERROR),
+            ApiError::IoError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::BuildFileNotFound(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::NoBody => StatusCode::BAD_REQUEST,
+            ApiError::BuildFailed(_) => StatusCode::BAD_REQUEST,
+            ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         Response::builder()
             .status(status)

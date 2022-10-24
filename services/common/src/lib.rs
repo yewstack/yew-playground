@@ -1,6 +1,6 @@
 pub mod errors;
 pub mod response;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub fn init_tracing() {
@@ -14,8 +14,7 @@ pub fn init_tracing() {
         .init();
 }
 
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Response {
     Output {

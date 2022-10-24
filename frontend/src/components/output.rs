@@ -1,9 +1,9 @@
-use std::rc::Rc;
-use gloo_net::http::QueryParams;
-use yew::prelude::*;
 use crate::{ActionButtonState, ActionButtonStateContext};
+use gloo_net::http::QueryParams;
+use std::rc::Rc;
+use yew::prelude::*;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct OutputContainerProps {
     pub value: Rc<str>,
 }
@@ -17,14 +17,17 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     {
         let loading = loading.clone();
         let src = src.clone();
-        use_effect_with_deps(move |value| {
-            src.set({
-                let query = QueryParams::new();
-                query.append("code", &*value);
-                AttrValue::from(format!("/api/run/?{}", query))
-            });
-            loading.set(false);
-        }, Rc::clone(&props.value))
+        use_effect_with_deps(
+            move |value| {
+                src.set({
+                    let query = QueryParams::new();
+                    query.append("code", value);
+                    AttrValue::from(format!("/api/run/?{}", query))
+                });
+                loading.set(false);
+            },
+            Rc::clone(&props.value),
+        )
     };
 
     let fallback = html! { <div class="h-full bg-gray-600">{"Loading"}</div> };
@@ -32,7 +35,14 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     let onload = move |_| {
         action_button_state.dispatch(ActionButtonState::Enabled);
     };
-    let classes = classes!("w-full", "h-full", "border-t-[10px]", "border-gray-400", "border-solid", if *loading { "invisible" } else { "visible" });
+    let classes = classes!(
+        "w-full",
+        "h-full",
+        "border-t-[10px]",
+        "border-gray-400",
+        "border-solid",
+        if *loading { "invisible" } else { "visible" }
+    );
     html! {
         <>
             if *loading {

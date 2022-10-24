@@ -1,3 +1,5 @@
+use crate::rc_type;
+use crate::utils::query::use_query;
 use anyhow::Result;
 use gloo::console::log;
 use monaco::api::TextModel;
@@ -7,8 +9,6 @@ use std::rc::Rc;
 use yew::prelude::*;
 use yew::suspense::use_future_with_deps;
 use yew::HtmlResult;
-use crate::rc_type;
-use crate::utils::query::use_query;
 
 const BASE_CONTENT: &str = r#"
 use yew::prelude::*;
@@ -29,7 +29,9 @@ impl TextContent {
     fn new(val: Option<Result<String>>) -> Self {
         Self(Rc::new(val))
     }
-    fn new_with_string(text: String) -> Self { Self::new(Some(Ok(text)))    }
+    fn new_with_string(text: String) -> Self {
+        Self::new(Some(Ok(text)))
+    }
 }
 
 fn get_options() -> CodeEditorOptions {
@@ -51,14 +53,17 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
     let text_content = use_future_with_deps(
         |query| async move {
             if let Some(code) = &query.code {
-                return TextContent::new_with_string(code.to_string())
+                return TextContent::new_with_string(code.to_string());
             }
 
             let shared = match &query.shared {
-                Some(text) => {
-                    Some(crate::api::share::get(text).await.map_err(anyhow::Error::from).map(|paste| paste.fields.into_content()))
-                }
-                None => None
+                Some(text) => Some(
+                    crate::api::share::get(text)
+                        .await
+                        .map_err(anyhow::Error::from)
+                        .map(|paste| paste.fields.into_content()),
+                ),
+                None => None,
             };
             TextContent::new(shared)
         },

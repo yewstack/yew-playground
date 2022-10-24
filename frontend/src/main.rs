@@ -3,23 +3,23 @@ mod app;
 mod components;
 mod macros;
 mod utils;
-use tracing_web::{MakeConsoleWriter, performance_layer};
 use tracing_subscriber::fmt::format::{FmtSpan, Pretty};
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::prelude::*;
+use tracing_web::{performance_layer, MakeConsoleWriter};
 
 use app::App;
 use std::rc::Rc;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActionButtonState {
     Enabled,
     Disabled,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ActionButtonStateReducible {
     state: ActionButtonState,
 }
@@ -61,8 +61,7 @@ fn main() {
         .with_timer(UtcTime::rfc_3339())
         .with_writer(MakeConsoleWriter)
         .with_span_events(FmtSpan::ACTIVE);
-    let perf_layer = performance_layer()
-        .with_details_from_fields(Pretty::default());
+    let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
 
     tracing_subscriber::registry()
         .with(fmt_layer)

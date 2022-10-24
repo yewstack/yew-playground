@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
 use anyhow::{anyhow, Context, Result};
 use gloo_net::http::{Request, Response};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::fmt;
 
 #[cfg(feature = "emulator")]
 const FIRESTORE_URL: &str =
@@ -22,11 +22,14 @@ pub struct FirestoreError {
 }
 
 impl FirestoreError {
-    async fn anyhow_from_response<V>(resp: &Response) -> Result<V>  {
+    async fn anyhow_from_response<V>(resp: &Response) -> Result<V> {
         let mut error = resp.json::<Value>().await?;
-        let error = error.get_mut(ERROR).ok_or_else(|| anyhow!("invalid schema returned by firestore"))?;
+        let error = error
+            .get_mut(ERROR)
+            .ok_or_else(|| anyhow!("invalid schema returned by firestore"))?;
         let error = error.take();
-        let error = serde_json::from_value::<FirestoreError>(error).context("invalid schema for error field returned by firestore")?;
+        let error = serde_json::from_value::<FirestoreError>(error)
+            .context("invalid schema for error field returned by firestore")?;
         Err(error.into())
     }
 }
@@ -84,11 +87,13 @@ impl PasteDocument {
 }
 
 pub async fn get(id: &str) -> Result<PasteDocument> {
-    let resp = Request::get(&format!("{}/{}", FIRESTORE_URL, id)).send().await?;
+    let resp = Request::get(&format!("{}/{}", FIRESTORE_URL, id))
+        .send()
+        .await?;
     if resp.status() == 200 {
         Ok(resp.json().await?)
     } else {
-        return FirestoreError::anyhow_from_response(&resp).await;
+        FirestoreError::anyhow_from_response(&resp).await
     }
 }
 
@@ -104,15 +109,12 @@ pub async fn create(content: &str) -> Result<PasteDocument> {
         }
     });
 
-    let resp = Request::post(FIRESTORE_URL)
-        .json(&doc)?
-        .send()
-        .await?;
+    let resp = Request::post(FIRESTORE_URL).json(&doc)?.send().await?;
 
     if (200..300).contains(&resp.status()) {
         let paste = resp.json::<PasteDocument>().await?;
         Ok(paste)
     } else {
-        return FirestoreError::anyhow_from_response(&resp).await;
+        FirestoreError::anyhow_from_response(&resp).await
     }
 }

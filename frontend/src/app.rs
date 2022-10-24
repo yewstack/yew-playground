@@ -1,11 +1,11 @@
 use crate::components::editor::Editor;
 use crate::components::output::OutputContainer;
+use crate::utils::query::Query;
 use crate::{icon, ActionButtonState, ActionButtonStateContext};
+use gloo::history::{BrowserHistory, History};
 use std::rc::Rc;
-use gloo::history::{History, BrowserHistory};
 use yew::prelude::*;
 use yew::suspense::Suspense;
-use crate::utils::query::Query;
 
 #[function_component]
 pub fn App() -> Html {
@@ -47,7 +47,9 @@ pub fn App() -> Html {
                     shared: Some(id),
                     code: None,
                 };
-                history.push_with_query("/", query).expect("failed to navigate");
+                history
+                    .push_with_query("/", query)
+                    .expect("failed to navigate");
                 action_button_state.dispatch(ActionButtonState::Enabled);
             })
         }

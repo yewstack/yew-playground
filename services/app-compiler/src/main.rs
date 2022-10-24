@@ -29,7 +29,7 @@ lazy_static! {
         .unwrap_or(4000);
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Response {
     Output {
