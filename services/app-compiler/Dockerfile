@@ -2,10 +2,11 @@ FROM rust:latest as builder
 
 WORKDIR /app
 
-# Context must be root dir
+# Context must be repo root
 
-COPY ./services /app
-COPY Cargo.* /app
+RUN cargo new frontend
+COPY ./services ./services
+COPY Cargo.* ./
 
 RUN cargo build --package app-compiler --release
 

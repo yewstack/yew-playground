@@ -4,8 +4,9 @@ WORKDIR /app
 
 # Context must be repo root
 
-COPY ./services .
-COPY Cargo.* .
+RUN cargo new frontend
+COPY ./services ./services
+COPY Cargo.* ./
 
 RUN cargo build --package backend --release
 
