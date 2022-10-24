@@ -1,13 +1,13 @@
 use std::net::SocketAddr;
 
 use anyhow::Error;
-use axum::body::Body;
-use axum::response::Response;
+use axum::response::{Html};
 use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::{Router};
+use axum::extract::Query;
 use errors::ApiError;
 use lazy_static::lazy_static;
-use reqwest::{Client, ResponseBuilderExt};
+use reqwest::{Client};
 use response::Bson;
 use serde::{Deserialize, Serialize};
 use tower_http::trace::TraceLayer;
@@ -28,7 +28,7 @@ lazy_static! {
 
 #[derive(Deserialize)]
 struct RunPayload {
-    main_contents: String,
+    code: String,
 }
 
 #[derive(Serialize)]
@@ -38,33 +38,51 @@ struct RunResponse {
     wasm: Vec<u8>,
 }
 
-async fn run(Json(body): Json<RunPayload>) -> Result<Response<Body>, ApiError> {
-    let client = &*CLINET;
-    // let res = client.get("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity")
-    //     .query(&[("audience", &*COMPILER_URL)])
-    //     .header("Metadata-Flavor", "Google")
-    //     .send()
-    //     .await
-    //     .expect("can't authenticate with Google metadata server. something horribly gone wrong");
+const INDEX_HTML: &str = r#"
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+    /*JS_GOES_HERE*/
+    /*INIT_GOES_HERE*/
+    </script>
+</body>
+</html>
+"#;
 
-    // let token = res.text().await.map_err(Error::from)?;
+async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
+    let client = &*CLINET;
+
     let mut res = client
         .post(format!("{}/run", *COMPILER_URL))
-        .body(body.main_contents)
-        // .header("Authorization", format!("Bearer {}", token))
+        .body(body.code)
         .send()
         .await
         .map_err(Error::from)?;
 
-    let mut response = Response::builder();
-    response.headers_mut().replace(res.headers_mut());
+    let run_response: common::Response = {
+        let bytes = res.bytes().await.unwrap();
+        bson::from_slice(&bytes).unwrap()
+    };
 
-    let response = response
-        .status(res.status())
-        .url(res.url().clone())
-        .body(Body::from(res.bytes().await.map_err(Error::from)?))
-        .map_err(Error::from)?;
-    Ok(response)
+    match run_response {
+        common::Response::Output { index_html: _, js, wasm } => {
+            let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
+            println!("{}", index_html);
+            let init = format!("init((new Int8Array({:?})).buffer)", wasm);
+            let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
+            Ok(Html(index_html))
+        },
+        common::Response::CompileError(e) => {
+            Ok(Html(e))
+        },
+    }
 }
 
 async fn hello() -> Bson<RunResponse> {
@@ -81,7 +99,7 @@ async fn main() {
 
     let api = Router::new()
         .route("/hello", get(hello))
-        .route("/run", post(run))
+        .route("/run", get(run))
         .layer(TraceLayer::new_for_http());
 
     let app = Router::new().nest("/api", api);

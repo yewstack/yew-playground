@@ -1,5 +1,3 @@
-#![feature(const_option_ext)]
-
 mod api;
 mod app;
 mod components;
