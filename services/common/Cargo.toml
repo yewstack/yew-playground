@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.5", features = ["http2"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-bson = "2"
+axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+anyhow = { workspace = true }
+bson = { workspace = true }
 mime = "0.3"
+tower = { workspace = true, features = ["limit", "timeout"] }
 thiserror = "1"
-tower = { version = "0.4", features = ["limit", "timeout"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-anyhow = "1"

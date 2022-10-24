@@ -3,6 +3,10 @@ mod app;
 mod components;
 mod macros;
 mod utils;
+use tracing_web::{MakeConsoleWriter, performance_layer};
+use tracing_subscriber::fmt::format::{FmtSpan, Pretty};
+use tracing_subscriber::fmt::time::UtcTime;
+use tracing_subscriber::prelude::*;
 
 use app::App;
 use std::rc::Rc;
@@ -52,5 +56,18 @@ fn Root() -> Html {
 }
 
 fn main() {
+    let fmt_layer = tracing_subscriber::fmt::layer()
+        .with_ansi(false)
+        .with_timer(UtcTime::rfc_3339())
+        .with_writer(MakeConsoleWriter)
+        .with_span_events(FmtSpan::ACTIVE);
+    let perf_layer = performance_layer()
+        .with_details_from_fields(Pretty::default());
+
+    tracing_subscriber::registry()
+        .with(fmt_layer)
+        .with(perf_layer)
+        .init();
+
     yew::Renderer::<Root>::new().render();
 }

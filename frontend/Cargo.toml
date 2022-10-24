@@ -3,29 +3,25 @@ name = "frontend"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
 yew-router = { git = "https://github.com/yewstack/yew/" }
-anyhow = "1"
+
+wasm-bindgen = "0.2.78"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
-wasm-bindgen = "0.2.78"
+web-sys = { version = "0.3", features = ["HtmlCollection"] }
+
 gloo = "0.8"
 gloo-net = { version = "0.2.4", features = ["http", "json"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1.0"
 monaco = { git = "https://github.com/hamza1311/rust-monaco", branch = "yew-playground", features = ["yew-components"] }
-bson = "2.1"
-getrandom = { version = "*",  features = ["js"]}
-uuid = { version = "0.8.1", features = ["serde", "v4", "wasm-bindgen"] }
-thiserror = "1.0.31"
+tracing-web = "0.1.2"
 
-[dependencies.web-sys]
-version = "0.3"
-features = [
-    "HtmlIFrameElement",
-    "HtmlDocument",
-    "HtmlCollection"
-]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+tracing = { workspace = true, default-features = false }
+time = { version = "0.3", features = ["wasm-bindgen"] }
+tracing-subscriber = { workspace = true, features = ["time"] }

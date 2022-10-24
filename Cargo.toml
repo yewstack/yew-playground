@@ -8,3 +8,18 @@ members = [
 exclude = [
     "app" # app must NOT be part of the workspace. It needs to have it's own target directory and lock file
 ]
+
+[workspace.dependencies]
+axum = { version = "0.5", features = ["http2"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+serde_json = "1.0"
+bson = "2"
+mime = "0.3"
+thiserror = "1"
+tower = { version = "0.4" }
+tower-http = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3" }
+anyhow = "1"
+lazy_static = "1.4.0"

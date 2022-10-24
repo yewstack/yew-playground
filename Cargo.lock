@@ -29,6 +29,7 @@ checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 name = "app-compiler"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "common",
  "hyper",
@@ -39,7 +40,6 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -123,7 +123,6 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -169,7 +168,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "time",
- "uuid 1.2.1",
+ "uuid",
 ]
 
 [[package]]
@@ -290,8 +289,6 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bson",
- "getrandom",
  "gloo",
  "gloo-net",
  "js-sys",
@@ -299,7 +296,10 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "uuid 0.8.2",
+ "time",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-web",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -391,10 +391,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c05aeb6a22b8f62540c194aac980f2115af067bfe15a0734d7277a768d396b31"
 dependencies = [
  "cfg-if",
- "js-sys",
  "libc",
  "wasi",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1428,6 +1426,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fab5c8b9980850e06d92ddbe3ab839c062c801f3927c0fb8abd6fc8e918fbca"
 dependencies = [
  "itoa",
+ "js-sys",
  "libc",
  "num_threads",
  "serde",
@@ -1638,9 +1637,23 @@ dependencies = [
  "sharded-slab",
  "smallvec",
  "thread_local",
+ "time",
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "tracing-web"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ff5efc53ed5a7c4b99b3dd24fd10f41e7aa1b284a4e64ae9167d97e31afe124"
+dependencies = [
+ "js-sys",
+ "tracing-core",
+ "tracing-subscriber",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -1679,16 +1692,6 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
-]
-
-[[package]]
-name = "uuid"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-dependencies = [
- "getrandom",
- "serde",
 ]
 
 [[package]]

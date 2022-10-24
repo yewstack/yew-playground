@@ -6,17 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.5", features = ["http2"] }
-tokio = { version = "1.16", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tower = { version = "0.4", features = ["limit", "timeout"] }
-bson = "2"
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tower = { workspace = true }
+lazy_static = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+tower-http = { workspace = true, features = ["trace", "cors"] }
+bson = { workspace = true }
+
 thiserror = "1"
-lazy_static = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tower-http = { version = "0.3.0", features = ["trace", "cors"] }
 reqwest = { version = "0.11.10", features = ["json", "stream"] }
-anyhow = "1"
 common = { path = "../common" }
