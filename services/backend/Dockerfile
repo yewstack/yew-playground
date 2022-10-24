@@ -4,9 +4,8 @@ WORKDIR /app
 
 # Context must be repo root
 
-COPY ./services /app
-COPY Cargo.toml /app
-COPY Cargo.lock /app
+COPY ./services .
+COPY Cargo.* .
 
 RUN cargo build --package backend --release
 
