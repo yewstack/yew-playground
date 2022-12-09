@@ -13,8 +13,8 @@ use yew::HtmlResult;
 const BASE_CONTENT: &str = r#"
 use yew::prelude::*;
 
-#[function_component(App)]
-fn app() -> Html {
+#[function_component]
+fn App() -> Html {
     html! { "hello world" }
 }
 
