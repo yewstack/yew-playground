@@ -1,4 +1,5 @@
 use crate::{ActionButtonState, ActionButtonStateContext};
+use crate::api::BACKEND_URL;
 use gloo_net::http::QueryParams;
 use std::rc::Rc;
 use yew::prelude::*;
@@ -22,7 +23,7 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
                 src.set({
                     let query = QueryParams::new();
                     query.append("code", value);
-                    AttrValue::from(format!("/api/run/?{}", query))
+                    AttrValue::from(format!("{}/run/?{}", BACKEND_URL, query))
                 });
                 loading.set(false);
             },
