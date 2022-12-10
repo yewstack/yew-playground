@@ -23,7 +23,7 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
                 src.set({
                     let query = QueryParams::new();
                     query.append("code", value);
-                    AttrValue::from(format!("{}/run/?{}", BACKEND_URL, query))
+                    AttrValue::from(format!("{}/run?{}", BACKEND_URL, query))
                 });
                 loading.set(false);
             },
