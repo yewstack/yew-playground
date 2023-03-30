@@ -12,4 +12,13 @@ web-sys = "0.3"
 js-sys = "0.3"
 wasm-bindgen-futures = "0.4"
 gloo = "0.8.0"
+chrono = "0.4.24"
+prokio = "0.1.0"
+implicit-clone = "0.3.5"
+anyhow = "1.0.70"
+serde_json = "1.0.95"
+tracing = "0.1.37"
+rand = "0.8.5"
+serde = { version = "1.0.159", features = ["derive"] }
+getrandom = { version = "0.2.8", features = ["js"] }
 #monaco = { git = "https://github.com/siku2/rust-monaco/", features = ["yew-components"] }
