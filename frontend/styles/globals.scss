@@ -9,6 +9,19 @@
     box-sizing: border-box;
 }
 
+/* For Split.js */
+.gutter {
+	background-color: #9ca3af;
+}
+
+.gutter.gutter-vertical {
+	cursor: row-resize;
+}
+
+.gutter.gutter-horizontal {
+	cursor: col-resize;
+}
+
 /*
 body {
     height: 100vh;

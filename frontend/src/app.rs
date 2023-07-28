@@ -3,6 +3,7 @@ use crate::components::output::OutputContainer;
 use crate::utils::query::Query;
 use crate::{icon, ActionButtonState, ActionButtonStateContext};
 use gloo::history::{BrowserHistory, History};
+use split_yew::{Direction, Split};
 use std::rc::Rc;
 use yew::prelude::*;
 use yew::suspense::Suspense;
@@ -14,12 +15,21 @@ pub fn App() -> Html {
 
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
+    let split_sizes = use_state(|| vec![100.0, 0.0]);
+    let output_collapsed = use_state(|| true);
+
     let on_run_click = {
         let action_button_state = action_button_state.clone();
         let editor_contents = editor_contents.clone();
+        let split_sizes = split_sizes.clone();
+        let output_collapsed = output_collapsed.clone();
         let data = data.clone();
         move |_| {
             data.set(Some(Rc::from(editor_contents.as_ref().borrow().as_str())));
+            if *output_collapsed {
+                output_collapsed.set(false);
+                split_sizes.set(vec![50.0, 50.0]);
+            }
             action_button_state.dispatch(ActionButtonState::Disabled);
         }
     };
@@ -69,11 +79,7 @@ pub fn App() -> Html {
         classes.push("hover:bg-gray-900")
     }
 
-    let template_rows = if data.is_some() {
-        "grid-template-rows: 1fr 1fr"
-    } else {
-        "grid-template-rows: 1fr "
-    };
+    let collapsed_split = if *output_collapsed { Some(1) } else { None };
 
     html! {
         <div class="flex flex-col h-screen">
@@ -84,16 +90,18 @@ pub fn App() -> Html {
                     <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
                 </div>
             </header>
-            <div class="grid h-full" style={template_rows}>
-                <Suspense fallback={{html! {"loading..."}}}>
-                    <Editor {oninput} />
-                </Suspense>
-                <div class="w-full h-full min-h-0">
+            <Split min_sizes={vec![100.0, 0.0]} sizes={(*split_sizes).clone()} collapsed={collapsed_split} direction={Direction::Vertical} class="flex flex-col flex-grow overflow-hidden">
+                <div>
+                    <Suspense fallback={{html! {"loading..."}}}>
+                        <Editor {oninput} />
+                    </Suspense>
+                </div>
+                <div class="w-full min-h-0">
                     if let Some(ref data) = *data {
                         <OutputContainer value={data} />
                     }
                 </div>
-            </div>
+            </Split>
         </div>
     }
 }
