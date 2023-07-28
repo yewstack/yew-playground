@@ -25,4 +25,5 @@ thiserror = { workspace = true }
 tracing = { workspace = true, default-features = false }
 time = { version = "0.3", features = ["wasm-bindgen"] }
 tracing-subscriber = { workspace = true, features = ["time"] }
-split-yew = { git = "https://github.com/aleb2000/split-yew", branch = "yew-playground"}
+
+split-yew = { git = "https://github.com/aleb2000/split-yew", branch = "yew-playground" }

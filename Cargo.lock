@@ -1363,7 +1363,7 @@ dependencies = [
 [[package]]
 name = "split-yew"
 version = "0.1.0"
-source = "git+https://github.com/aleb2000/split-yew?branch=yew-playground#60422c1dd1d6b59dbb95ea5fb4387281341b972d"
+source = "git+https://github.com/aleb2000/split-yew?branch=yew-playground#8f22a9c32bdf5f06e0b6c172f85b9fd98940e543"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
