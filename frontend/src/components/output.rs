@@ -39,7 +39,6 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     let classes = classes!(
         "w-full",
         "h-full",
-        "border-solid",
         if *loading { "invisible" } else { "visible" }
     );
     html! {
