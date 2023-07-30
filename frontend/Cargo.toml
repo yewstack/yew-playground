@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
-yew-router = { git = "https://github.com/yewstack/yew/" }
+yew = { version = "0.20", features = ["csr"] }
+yew-router = "0.17"
 
 wasm-bindgen = "0.2.78"
 wasm-bindgen-futures = "0.4"
@@ -14,7 +14,7 @@ web-sys = { version = "0.3", features = ["HtmlCollection"] }
 
 gloo = "0.8"
 gloo-net = { version = "0.2.4", features = ["http", "json"] }
-monaco = { git = "https://github.com/hamza1311/rust-monaco", branch = "yew-playground", features = ["yew-components"] }
+monaco = { git = "https://github.com/siku2/rust-monaco", features = ["yew-components"] }
 tracing-web = "0.1.2"
 
 anyhow = { workspace = true }
