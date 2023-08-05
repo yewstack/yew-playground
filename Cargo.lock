@@ -386,6 +386,7 @@ dependencies = [
  "monaco",
  "serde",
  "serde_json",
+ "split-yew",
  "thiserror",
  "time",
  "tracing",
@@ -1036,6 +1037,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
+
  "syn 2.0.27",
 ]
 
@@ -1543,10 +1545,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "split-yew"
+version = "0.1.0"
+source = "git+https://github.com/aleb2000/split-yew?branch=yew-playground#8f22a9c32bdf5f06e0b6c172f85b9fd98940e543"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+ "yew",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b60f673f44a8255b9c8c657daf66a596d435f2da81a555b06dc644d080ba45e0"
 dependencies = [
  "proc-macro2",
  "quote",

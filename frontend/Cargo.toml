@@ -25,3 +25,5 @@ thiserror = { workspace = true }
 tracing = { workspace = true, default-features = false }
 time = { version = "0.3", features = ["wasm-bindgen"] }
 tracing-subscriber = { workspace = true, features = ["time"] }
+
+split-yew = "0.1.1"

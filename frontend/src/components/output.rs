@@ -1,5 +1,5 @@
-use crate::{ActionButtonState, ActionButtonStateContext};
 use crate::api::BACKEND_URL;
+use crate::{ActionButtonState, ActionButtonStateContext};
 use gloo_net::http::QueryParams;
 use std::rc::Rc;
 use yew::prelude::*;
@@ -39,9 +39,6 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     let classes = classes!(
         "w-full",
         "h-full",
-        "border-t-[10px]",
-        "border-gray-400",
-        "border-solid",
         if *loading { "invisible" } else { "visible" }
     );
     html! {
