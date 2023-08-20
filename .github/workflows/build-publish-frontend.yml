@@ -12,22 +12,20 @@ jobs:
     name: Build and deploy frontend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
           components: rust-src
-          override: true
-          profile: minimal
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: Setup node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "18"
 
       - uses: jetli/trunk-action@v0.1.0
         with:
