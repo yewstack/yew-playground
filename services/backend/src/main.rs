@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use axum::extract::Query;
 use axum::response::Html;
 use axum::routing::get;
@@ -11,7 +11,7 @@ use reqwest::Client;
 use response::Bson;
 use serde::{Deserialize, Serialize};
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tracing::{debug, error, info};
 
 use common::response;
 use common::{errors, init_tracing};
@@ -66,10 +66,19 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
         .await
         .map_err(Error::from)?;
 
+    debug!(status = ?res.status(), "got response from compiler");
+
     let run_response: common::Response = {
-        let bytes = res.bytes().await.unwrap();
-        bson::from_slice(&bytes).unwrap()
+        let bytes = res.bytes().await.map_err(|e| {
+            error!(?e, "failed to get bytes from compiler response");
+            ApiError::Unknown(e.into())
+        })?;
+        bson::from_slice(&bytes).map_err(|e| {
+            error!(?e, "failed to deserialize compiler response");
+            ApiError::BsonDeserializeError(e)
+        })?
     };
+
 
     match run_response {
         common::Response::Output {
@@ -77,11 +86,22 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
             js,
             wasm,
         } => {
-            let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
-            println!("{}", index_html);
-            let init = format!("init((new Int8Array({:?})).buffer)", wasm);
-            let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
-            Ok(Html(index_html))
+            debug!(wasm_bytes = wasm.len(), "compilation successful");
+            let init_fn = js.split("export default").nth(1).and_then(|it| it.trim().strip_suffix(";"));
+            match init_fn {
+                Some(init_fn) => {
+                    let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
+                    let init = format!("{}((new Int8Array({:?})).buffer)", init_fn, wasm);
+                    let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
+
+                    tokio::fs::write("/home/hamza/code/yew-playground/app/dist/tmp.html", &index_html).await.unwrap();
+
+                    Ok(Html(index_html))
+                }
+                None => {
+                    return Err(ApiError::Unknown(anyhow!("failed to find init function as default export in js")))
+                }
+            }
         }
         common::Response::CompileError(e) => Ok(Html(e)),
     }

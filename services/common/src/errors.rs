@@ -17,6 +17,8 @@ pub enum ApiError {
     BuildFailed(Output),
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
+    #[error("failed to deserialize bson: {0}")]
+    BsonDeserializeError(#[from] bson::de::Error),
 }
 
 impl IntoResponse for ApiError {
@@ -27,6 +29,7 @@ impl IntoResponse for ApiError {
             ApiError::NoBody => StatusCode::BAD_REQUEST,
             ApiError::BuildFailed(_) => StatusCode::BAD_REQUEST,
             ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::BsonDeserializeError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         Response::builder()
             .status(status)
