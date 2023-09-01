@@ -18,5 +18,5 @@ tower-http = { workspace = true, features = ["trace", "cors"] }
 bson = { workspace = true }
 
 thiserror = "1"
-reqwest = { version = "0.11.10", features = ["json", "stream"] }
+reqwest = { version = "0.11.10", features = ["json", "stream", "rustls"], default-features = false }
 common = { path = "../common" }
