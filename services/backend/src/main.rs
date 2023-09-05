@@ -101,8 +101,6 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
                     let init = format!("{}((new Int8Array({:?})).buffer)", init_fn, wasm);
                     let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
 
-                    tokio::fs::write("/home/hamza/code/yew-playground/app/dist/tmp.html", &index_html).await.unwrap();
-
                     Ok(Html(index_html))
                 }
                 None => {
