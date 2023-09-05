@@ -11,7 +11,7 @@ use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
-use tracing::{debug, info};
+use tracing::{debug, info, error};
 
 use common::errors::{timeout_or_500, ApiError};
 use common::init_tracing;
@@ -46,15 +46,37 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
         return Err(ApiError::NoBody);
     }
     let body = String::from_utf8_lossy(&body);
-    let app_dir = fs::canonicalize(&*APP_DIR).await?;
-    fs::write(app_dir.join("src/main.rs"), &*body).await?;
+    let app_dir = match fs::canonicalize(&*APP_DIR).await {
+        Ok(v) => v,
+        Err(e) => {
+            error!(?e, "failed to canonicalize app_dir path");
+            return Err(ApiError::IoError(e))
+        },
+    };
+
+    match fs::write(app_dir.join("src/main.rs"), &*body).await {
+        Ok(_) => {},
+        Err(e) => {
+            error!(?e, "failed to write main.rs");
+            return Err(ApiError::IoError(e))
+        },
+    };
+
     let mut cmd = Command::new(&*TRUNK_BIN);
     let cmd = cmd
         .arg("--config")
         .arg(app_dir.join("Trunk.toml"))
         .arg("build");
     debug!(?cmd, "running command");
-    let output = cmd.output().await?;
+
+    let output = match cmd.output().await {
+        Ok(o) => o,
+        Err(e) => {
+            error!(?e, "running trunk failed");
+            return Err(ApiError::IoError(e))
+        },
+    };
+
     if !output.status.success() {
         return Ok(Bson(Response::CompileError(
             String::from_utf8_lossy(&output.stderr).to_string(),
@@ -62,9 +84,19 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
     }
 
     let dist = app_dir.join("dist");
-    let index_html = fs::read_to_string(dist.join("index.html")).await?;
-    let js = fs::read_to_string(dist.join("app.js")).await?;
-    let wasm = fs::read(dist.join("app_bg.wasm")).await?;
+    let index_html = fs::read_to_string(dist.join("index.html")).await.map_err(|e| {
+        error!(?e, "failed to read index.html");
+        ApiError::IoError(e)
+    })?;
+    let js = fs::read_to_string(dist.join("app.js")).await.map_err(|e| {
+        error!(?e, "failed to read app.js");
+        ApiError::IoError(e)
+    })?;
+    let wasm = fs::read(dist.join("app_bg.wasm")).await.map_err(|e| {
+        error!(?e, "failed to read app_bg.wasm");
+        ApiError::IoError(e)
+    })?;
+    
 
     Ok(Bson(Response::Output {
         index_html,

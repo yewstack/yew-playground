@@ -8,7 +8,7 @@ use axum::{body, BoxError};
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
     #[error("{0}")]
-    IoError(#[from] std::io::Error),
+    IoError(std::io::Error),
     #[error("{0} should be present after trunk build but is not")]
     BuildFileNotFound(&'static str),
     #[error("request must have a body but none was found")]
