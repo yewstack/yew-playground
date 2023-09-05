@@ -66,7 +66,14 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
         .await
         .map_err(Error::from)?;
 
-    debug!(status = ?res.status(), "got response from compiler");
+    let status = res.status();
+    debug!(status = ?status, "got response from compiler");
+
+    if !status.is_success() {
+        return Err(ApiError::Unknown(
+            anyhow!("Compiler service returned an error: {}", res.text().await.unwrap())
+        ))
+    }
 
     let run_response: common::Response = {
         let bytes = res.bytes().await.map_err(|e| {
