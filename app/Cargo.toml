@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew = { version = "0.20", features = ["csr"] }
+yew = { version = "0.21", features = ["csr"] }
 wasm-bindgen = "0.2"
 web-sys = "0.3"
 js-sys = "0.3"
@@ -21,6 +21,4 @@ tracing = "0.1.37"
 rand = "0.8.5"
 serde = { version = "1.0.159", features = ["derive"] }
 getrandom = { version = "0.2.8", features = ["js"] }
-sledgehammer_bindgen = "0.1.3"
-sledgehammer_utils = "0.1.0"
-#monaco = { git = "https://github.com/siku2/rust-monaco/", features = ["yew-components"] }
+
