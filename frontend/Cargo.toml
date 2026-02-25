@@ -1,20 +1,20 @@
 [package]
 name = "frontend"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-yew = { version = "0.20", features = ["csr"] }
-yew-router = "0.17"
+yew = { version = "0.22", features = ["csr"] }
+yew-router = "0.19"
 
-wasm-bindgen = "0.2.78"
+wasm-bindgen = "0.2.88"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = ["HtmlCollection"] }
 
-gloo = "0.8"
-gloo-net = { version = "0.2.4", features = ["http", "json"] }
-monaco = { git = "https://github.com/siku2/rust-monaco", features = ["yew-components"] }
+gloo = "0.11"
+gloo-net = { version = "0.5", features = ["http", "json"] }
+monaco = { git = "https://github.com/Madoshakalaka/rust-monaco", branch = "bump-yew-0.22", features = ["yew-components"] }
 tracing-web = "0.1.2"
 
 anyhow = { workspace = true }
@@ -26,4 +26,4 @@ tracing = { workspace = true }
 time = { version = "0.3", features = ["wasm-bindgen"] }
 tracing-subscriber = { workspace = true, features = ["time"] }
 
-split-yew = "0.1.1"
+split-yew = { git = "https://github.com/Madoshakalaka/split-yew", branch = "yew-0.22" }

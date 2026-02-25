@@ -8,7 +8,7 @@ use std::rc::Rc;
 use yew::prelude::*;
 use yew::suspense::Suspense;
 
-#[function_component]
+#[component]
 pub fn App() -> Html {
     let editor_contents = use_mut_ref(String::new);
     let data = use_state(|| None);

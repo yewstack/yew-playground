@@ -7,13 +7,13 @@ use monaco::yew::CodeEditor;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme};
 use std::rc::Rc;
 use yew::prelude::*;
-use yew::suspense::use_future_with_deps;
+use yew::suspense::use_future_with;
 use yew::HtmlResult;
 
 const BASE_CONTENT: &str = r#"
 use yew::prelude::*;
 
-#[function_component]
+#[component]
 fn App() -> Html {
     html! { "hello world" }
 }
@@ -46,11 +46,12 @@ pub struct EditorProps {
     pub oninput: Callback<String>,
 }
 
-#[function_component]
+#[component]
 pub fn Editor(props: &EditorProps) -> HtmlResult {
     let query = use_query().unwrap();
 
-    let text_content = use_future_with_deps(
+    let text_content = use_future_with(
+        query,
         |query| async move {
             if let Some(code) = &query.code {
                 return TextContent::new_with_string(code.to_string());
@@ -67,10 +68,13 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
             };
             TextContent::new(shared)
         },
-        query,
     )?;
 
+    // Extract the text content and wrap in Rc for use as memo dependency
+    let content_rc = (*text_content).clone();
+
     let modal = use_memo(
+        content_rc,
         |text_content| {
             let text = match &**text_content {
                 Some(Ok(text)) => text,
@@ -79,13 +83,13 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
             };
             TextModel::create(text, Some("rust"), None).unwrap()
         },
-        text_content.clone(),
     );
 
     {
         let modal = modal.clone();
         let cb = props.oninput.clone();
-        use_effect_with_deps(
+        use_effect_with(
+            modal,
             move |modal| {
                 log!("we got called");
                 let modal2 = modal.clone();
@@ -96,7 +100,6 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
 
                 move || drop(disposable)
             },
-            modal,
         )
     }
 
