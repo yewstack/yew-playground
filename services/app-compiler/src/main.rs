@@ -132,7 +132,7 @@ async fn main() {
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(timeout_or_500))
-                .timeout(Duration::from_secs(10)),
+                .timeout(Duration::from_secs(60)),
         )
         .layer(GlobalConcurrencyLimitLayer::new(1))
         .layer(TraceLayer::new_for_http());
