@@ -14,7 +14,7 @@ web-sys = { version = "0.3", features = ["HtmlCollection"] }
 
 gloo = "0.11"
 gloo-net = { version = "0.5", features = ["http", "json"] }
-monaco = { git = "https://github.com/siku2/rust-monaco", rev = "196cbf2", features = ["yew-components"] }
+monaco = { version = "0.6", features = ["yew-components"] }
 tracing-web = "0.1.2"
 
 anyhow = { workspace = true }
