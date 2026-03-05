@@ -66,7 +66,8 @@ async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
     let cmd = cmd
         .arg("--config")
         .arg(app_dir.join("Trunk.toml"))
-        .arg("build");
+        .arg("build")
+        .kill_on_drop(true);
     debug!(?cmd, "running command");
 
     let output = match cmd.output().await {
