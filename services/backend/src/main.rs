@@ -94,7 +94,29 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
             wasm,
         } => {
             debug!(wasm_bytes = wasm.len(), "compilation successful");
-            let init_fn = js.split("export default").nth(1).and_then(|it| it.trim().strip_suffix(";"));
+            // Handle both old format: `export default __wbg_init;`
+            // and new format: `export { initSync, __wbg_init as default };`
+            let init_fn = js
+                .split("export default")
+                .nth(1)
+                .and_then(|it| it.trim().strip_suffix(";"))
+                .or_else(|| {
+                    // new wasm-bindgen: `export { ..., __name as default };`
+                    js.lines()
+                        .rev()
+                        .find_map(|line| {
+                            let line = line.trim();
+                            let line = line.strip_prefix("export")?;
+                            let line = line.trim().strip_prefix('{')?;
+                            let line = line.trim().strip_suffix("};")?;
+                            line.split(',')
+                                .find_map(|part| {
+                                    let part = part.trim();
+                                    part.strip_suffix("as default")
+                                        .map(|name| name.trim())
+                                })
+                        })
+                });
             match init_fn {
                 Some(init_fn) => {
                     let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
