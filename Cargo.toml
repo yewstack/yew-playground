@@ -5,6 +5,7 @@ members = [
     "services/backend",
     "services/common",
     "frontend",
+    "devtool",
 ]
 exclude = [
     "app" # app must NOT be part of the workspace. It needs to have it's own target directory and lock file

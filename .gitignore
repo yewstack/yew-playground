@@ -1,3 +1,4 @@
 target
 .firebase/
 firebase-debug.log
+devtool.log

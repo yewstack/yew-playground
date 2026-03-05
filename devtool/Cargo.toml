@@ -1,0 +1,12 @@
+[package]
+name = "devtool"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ratatui = { version = "0.30", features = ["crossterm"] }
+crossterm = "0.29"
+ansi-to-tui = "8.0.1"
+base64 = "0.22"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
