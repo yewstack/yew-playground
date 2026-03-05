@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::sync::LazyLock;
 
 use anyhow::{anyhow, Error};
 use axum::extract::Query;
@@ -6,25 +6,25 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
 use errors::ApiError;
-use lazy_static::lazy_static;
 use reqwest::Client;
 use response::Bson;
 use serde::{Deserialize, Serialize};
+use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 
 use common::response;
 use common::{errors, init_tracing};
 
-lazy_static! {
-    static ref PORT: u16 = std::env::var("PORT")
+static PORT: LazyLock<u16> = LazyLock::new(|| {
+    std::env::var("PORT")
         .ok()
         .and_then(|it| it.parse().ok())
-        .unwrap_or(3000);
-    static ref COMPILER_URL: String =
-        std::env::var("COMPILER_URL").expect("COMPILER_URL must be set");
-    static ref CLINET: Client = Client::new();
-}
+        .unwrap_or(3000)
+});
+static COMPILER_URL: LazyLock<String> =
+    LazyLock::new(|| std::env::var("COMPILER_URL").expect("COMPILER_URL must be set"));
+static CLIENT: LazyLock<Client> = LazyLock::new(Client::new);
 
 #[derive(Deserialize)]
 struct RunPayload {
@@ -57,7 +57,7 @@ const INDEX_HTML: &str = r#"
 "#;
 
 async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
-    let client = &*CLINET;
+    let client = &*CLIENT;
 
     let res = client
         .post(format!("{}/run", *COMPILER_URL))
@@ -126,7 +126,7 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
                     Ok(Html(index_html))
                 }
                 None => {
-                    return Err(ApiError::Unknown(anyhow!("failed to find init function as default export in js")))
+                    Err(ApiError::Unknown(anyhow!("failed to find init function as default export in js")))
                 }
             }
         }
@@ -153,10 +153,8 @@ async fn main() {
 
     let app = Router::new().nest("/api", api);
 
-    let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
+    let addr = format!("0.0.0.0:{}", *PORT);
+    let listener = TcpListener::bind(&addr).await.unwrap();
     info!("Server running on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

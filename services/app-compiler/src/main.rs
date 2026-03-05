@@ -1,33 +1,33 @@
-use std::net::SocketAddr;
+use std::sync::LazyLock;
 use std::time::Duration;
 
+use axum::body::Bytes;
 use axum::error_handling::HandleErrorLayer;
-use axum::extract::RawBody;
 use axum::routing::post;
 use axum::Router;
 use serde::Serialize;
 use tokio::fs;
+use tokio::net::TcpListener;
 use tokio::process::Command;
 use tower::limit::GlobalConcurrencyLimitLayer;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
-use tracing::{debug, info, error};
+use tracing::{debug, error, info};
 
 use common::errors::{timeout_or_500, ApiError};
 use common::init_tracing;
 use common::response::Bson;
-use lazy_static::lazy_static;
 
-lazy_static! {
-    static ref APP_DIR: String =
-        std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string());
-    static ref TRUNK_BIN: String =
-        std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string());
-    static ref PORT: u16 = std::env::var("PORT")
+static APP_DIR: LazyLock<String> =
+    LazyLock::new(|| std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string()));
+static TRUNK_BIN: LazyLock<String> =
+    LazyLock::new(|| std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string()));
+static PORT: LazyLock<u16> = LazyLock::new(|| {
+    std::env::var("PORT")
         .ok()
         .and_then(|it| it.parse().ok())
-        .unwrap_or(4000);
-}
+        .unwrap_or(4000)
+});
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -40,8 +40,7 @@ pub enum Response {
     CompileError(String),
 }
 
-async fn run(RawBody(body): RawBody) -> Result<Bson<Response>, ApiError> {
-    let body = hyper::body::to_bytes(body).await.unwrap();
+async fn run(body: Bytes) -> Result<Bson<Response>, ApiError> {
     if body.is_empty() {
         return Err(ApiError::NoBody);
     }
@@ -137,10 +136,8 @@ async fn main() {
         .layer(GlobalConcurrencyLimitLayer::new(1))
         .layer(TraceLayer::new_for_http());
 
-    let addr = SocketAddr::new("0.0.0.0".parse().unwrap(), *PORT);
+    let addr = format!("0.0.0.0:{}", *PORT);
+    let listener = TcpListener::bind(&addr).await.unwrap();
     info!("Server running on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

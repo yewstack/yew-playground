@@ -16,9 +16,7 @@ const FIRESTORE_URL: &str =
 #[derive(Debug, thiserror::Error, Deserialize)]
 #[error("{message}")]
 pub struct FirestoreError {
-    pub code: u16,
-    pub message: String,
-    pub status: String,
+    message: String,
 }
 
 impl FirestoreError {

@@ -1,9 +1,7 @@
 use std::process::Output;
 
-use axum::body::Full;
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::{body, BoxError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
@@ -31,18 +29,11 @@ impl IntoResponse for ApiError {
             ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::BsonDeserializeError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
-        Response::builder()
-            .status(status)
-            .header(
-                header::CONTENT_TYPE,
-                HeaderValue::from_static(mime::TEXT_PLAIN_UTF_8.as_ref()),
-            )
-            .body(body::boxed(Full::from(self.to_string())))
-            .unwrap()
+        (status, self.to_string()).into_response()
     }
 }
 
-pub async fn timeout_or_500(err: BoxError) -> (StatusCode, String) {
+pub async fn timeout_or_500(err: axum::BoxError) -> (StatusCode, String) {
     if err.is::<tower::timeout::error::Elapsed>() {
         (
             StatusCode::REQUEST_TIMEOUT,

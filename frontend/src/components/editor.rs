@@ -60,9 +60,7 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
             let shared = match &query.shared {
                 Some(text) => Some(
                     crate::api::share::get(text)
-                        .await
-                        .map_err(anyhow::Error::from)
-                        .map(|paste| paste.fields.into_content()),
+                        .await.map(|paste| paste.fields.into_content()),
                 ),
                 None => None,
             };

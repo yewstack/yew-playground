@@ -3,6 +3,9 @@ name = "frontend"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+emulator = []
+
 [dependencies]
 yew = { version = "0.22", features = ["csr"] }
 yew-router = "0.19"

@@ -1,8 +1,5 @@
 use axum::http::{header, HeaderValue, StatusCode};
-use axum::{
-    body::{self, Full},
-    response::{IntoResponse, Response},
-};
+use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 pub struct Bson<T>(pub T);
@@ -14,18 +11,11 @@ where
         let bytes = match bson::to_vec(&self.0) {
             Ok(res) => res,
             Err(err) => {
-                return Response::builder()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .header(
-                        header::CONTENT_TYPE,
-                        HeaderValue::from_static(mime::TEXT_PLAIN_UTF_8.as_ref()),
-                    )
-                    .body(body::boxed(Full::from(err.to_string())))
-                    .unwrap();
+                return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response();
             }
         };
 
-        let mut res = Response::new(body::boxed(Full::from(bytes)));
+        let mut res = Response::new(axum::body::Body::from(bytes));
         res.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static("application/bson"),
