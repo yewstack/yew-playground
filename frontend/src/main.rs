@@ -40,7 +40,7 @@ impl Reducible for ActionButtonStateReducible {
 
 pub type ActionButtonStateContext = UseReducerHandle<ActionButtonStateReducible>;
 
-#[function_component]
+#[component]
 fn Root() -> Html {
     let msg = use_reducer_eq(|| ActionButtonStateReducible {
         state: ActionButtonState::Enabled,

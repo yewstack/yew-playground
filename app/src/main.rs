@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-#[function_component]
+#[component]
 fn App() -> Html {
     html! { "hello world" }
 }

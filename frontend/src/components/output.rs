@@ -9,7 +9,7 @@ pub struct OutputContainerProps {
     pub value: Rc<str>,
 }
 
-#[function_component]
+#[component]
 pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
     let loading = use_state(|| true);
@@ -18,7 +18,8 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
     {
         let loading = loading.clone();
         let src = src.clone();
-        use_effect_with_deps(
+        use_effect_with(
+            Rc::clone(&props.value),
             move |value| {
                 src.set({
                     let query = QueryParams::new();
@@ -27,7 +28,6 @@ pub fn OutputContainer(props: &OutputContainerProps) -> Html {
                 });
                 loading.set(false);
             },
-            Rc::clone(&props.value),
         )
     };
 
