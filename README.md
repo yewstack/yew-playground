@@ -35,3 +35,7 @@ Mouse hover changes focus. Scroll wheel works. `Shift+drag` for text selection. 
 - Rust nightly with `wasm32-unknown-unknown` target
 - [trunk](https://trunk-rs.github.io/trunk/) (`cargo install trunk`)
 - Node.js (for tailwind CSS)
+
+### First-time Setup
+
+Run `npm install` in the `frontend/` directory to install Node dependencies (required for Tailwind CSS and Material Design icons).
