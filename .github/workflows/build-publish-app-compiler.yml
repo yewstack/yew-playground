@@ -88,6 +88,7 @@ jobs:
           service: 'playground-compiler'
           region: us-west1
           image: us-docker.pkg.dev/yew-rs/yew-playground/playground-compiler:latest
+          flags: '--min-instances=1'
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

@@ -52,6 +52,7 @@ jobs:
           service: 'playground-backend'
           region: us-west1
           image: us-docker.pkg.dev/yew-rs/yew-playground/playground:latest
+          flags: '--min-instances=1'
 
       - name: Deploy URL
         run: echo ${{ steps.deploy.outputs.url }}
