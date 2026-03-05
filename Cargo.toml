@@ -12,7 +12,7 @@ exclude = [
 ]
 
 [workspace.dependencies]
-axum = "0.8"
+axum = { version = "0.8", features = ["http2"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0"
