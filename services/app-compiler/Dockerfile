@@ -5,6 +5,7 @@ WORKDIR /app
 # Context must be repo root
 
 RUN cargo new frontend
+RUN cargo new devtool
 COPY ./services ./services
 COPY Cargo.* ./
 
