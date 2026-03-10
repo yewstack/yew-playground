@@ -94,7 +94,8 @@ pub fn App() -> Html {
                     }
                 </button>
 
-                <div>
+                <div class="flex items-center gap-3">
+                    <span class="text-gray-400 text-sm bg-gray-800 px-2 py-1 rounded">{format!("Yew {}", env!("APP_YEW_VERSION"))}</span>
                     <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
                 </div>
             </header>

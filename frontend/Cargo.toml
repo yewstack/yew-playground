@@ -30,3 +30,6 @@ time = { version = "0.3", features = ["wasm-bindgen"] }
 tracing-subscriber = { workspace = true, features = ["time"] }
 
 split-yew = "0.3.0"
+
+[build-dependencies]
+toml = "0.8"
