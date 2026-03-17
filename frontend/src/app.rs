@@ -1,5 +1,5 @@
 use crate::components::editor::Editor;
-use crate::components::output::OutputContainer;
+use crate::components::output::{CompileTimer, OutputContainer};
 use crate::utils::query::Query;
 use crate::{ActionButtonState, ActionButtonStateContext, icon};
 use gloo::history::{BrowserHistory, History};
@@ -110,7 +110,9 @@ pub fn App() -> Html {
                 </div>
                 <div class="w-full min-h-0">
                     if let Some(ref data) = *data {
-                        <OutputContainer value={data} key={*run_count} />
+                        <Suspense fallback={html! { <CompileTimer /> }}>
+                            <OutputContainer value={data} key={*run_count} />
+                        </Suspense>
                     }
                 </div>
             </Split>

@@ -13,6 +13,7 @@ use tokio::net::TcpListener;
 use tokio::process::Command;
 use tower::ServiceBuilder;
 use tower::limit::GlobalConcurrencyLimitLayer;
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 
@@ -165,7 +166,9 @@ async fn main() {
         .layer(GlobalConcurrencyLimitLayer::new(1))
         .layer(TraceLayer::new_for_http());
 
-    let app = Router::new().nest("/api", api);
+    let app = Router::new()
+        .nest("/api", api)
+        .layer(CorsLayer::permissive());
 
     let addr = format!("0.0.0.0:{}", *PORT);
     let listener = TcpListener::bind(&addr).await.unwrap();
