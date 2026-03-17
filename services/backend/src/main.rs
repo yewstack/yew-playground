@@ -95,7 +95,9 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
     })?;
 
     if !output.status.success() {
-        return Ok(Html(String::from_utf8_lossy(&output.stderr).to_string()));
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let html = anstyle_svg::Term::new().render_html(&stderr);
+        return Ok(Html(html));
     }
 
     let dist = app_dir.join("dist");

@@ -7,8 +7,9 @@ edition = "2024"
 emulator = []
 
 [dependencies]
-yew = { version = "0.22", features = ["csr"] }
-yew-router = "0.19"
+yew = { git = "https://github.com/yewstack/yew", features = ["csr"] }
+yew-router = { git = "https://github.com/yewstack/yew"}
+
 
 wasm-bindgen = "0.2.88"
 wasm-bindgen-futures = "0.4"
@@ -17,7 +18,7 @@ web-sys = { version = "0.3", features = ["HtmlCollection"] }
 
 gloo = "0.11"
 gloo-net = { version = "0.5", features = ["http", "json"] }
-monaco = { version = "0.6", features = ["yew-components"] }
+monaco = { version = "0.7", features = ["yew-components"] }
 tracing-web = "0.1.2"
 
 anyhow = { workspace = true }
@@ -29,7 +30,8 @@ tracing = { workspace = true }
 time = { version = "0.3", features = ["wasm-bindgen"] }
 tracing-subscriber = { workspace = true, features = ["time"] }
 
-split-yew = "0.3.0"
+# waiting for https://github.com/aleb2000/split-yew/pull/5
+split-yew = { git = "https://github.com/Madoshakalaka/split-yew", branch = "yew-playground" }
 
 [build-dependencies]
 toml = "0.8"

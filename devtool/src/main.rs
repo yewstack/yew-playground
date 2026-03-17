@@ -285,7 +285,7 @@ impl App {
             &[
                 ("PORT", backend_port.to_string()),
                 ("APP_DIR", app_dir),
-                ("SIMULATE_DELAY_SECS", "10".to_string()),
+                ("SIMULATE_DELAY_SECS", "3".to_string()),
             ],
             Some(&self.project_root),
             IDX_BACKEND,

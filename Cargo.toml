@@ -10,6 +10,10 @@ exclude = [
     "app" # app must NOT be part of the workspace. It needs to have it's own target directory and lock file
 ]
 
+# for rust-monaco
+[patch.crates-io]
+yew = {git = "https://github.com/yewstack/yew.git"}
+
 [workspace.dependencies]
 axum = { version = "0.8", features = ["http2"] }
 serde = { version = "1", features = ["derive"] }
