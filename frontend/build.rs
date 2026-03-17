@@ -1,21 +1,9 @@
 use std::collections::BTreeMap;
 
-const HIDDEN_DEPS: &[&str] = &[
-    "wasm-bindgen",
-    "wasm-bindgen-futures",
-    "web-sys",
-    "js-sys",
-    "getrandom",
-    "implicit-clone",
-];
-
 fn extract_deps(toml: &toml::Value) -> String {
     let deps = toml["dependencies"].as_table().expect("no [dependencies]");
     let mut map = BTreeMap::new();
     for (name, val) in deps {
-        if HIDDEN_DEPS.contains(&name.as_str()) {
-            continue;
-        }
         let version = match val {
             toml::Value::String(v) => v.clone(),
             toml::Value::Table(t) => {
