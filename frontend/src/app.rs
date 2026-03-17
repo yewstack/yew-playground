@@ -96,7 +96,7 @@ pub fn App() -> Html {
     html! {
         <div class="flex flex-col h-screen">
             <header class="bg-gray-700 p-3 flex justify-between">
-                <button onclick={on_run_click} disabled={action_button_state.disabled()} class={classes.clone()}>
+                <button onclick={on_run_click} disabled={action_button_state.disabled()} class={&classes}>
                     if action_button_state.disabled() {
                         <span class="animate-spin inline-block w-5 h-5 border-2 border-gray-200 border-t-transparent rounded-full"></span>
                         {"Running..."}
@@ -123,7 +123,7 @@ pub fn App() -> Html {
                             if *version == "next" { "bg-gray-900 text-gray-200" } else { "bg-gray-800 text-gray-500 hover:bg-gray-700" }
                         )}>{"Yew Next"}</button>
                     </div>
-                    <CratesPanel version={(*version).clone()} />
+                    <CratesPanel version={&*version} />
                     <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
                 </div>
             </header>
