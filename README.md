@@ -8,10 +8,9 @@ Playground for Yew. Hosted at https://play.yew.rs using Google Cloud Run
 cargo r -r -p devtool
 ```
 
-This opens a TUI that runs all three services simultaneously:
+This opens a TUI that runs both services simultaneously:
 
-- **Compiler** (port 4000+): compiles user-submitted Yew apps via `trunk build`
-- **Backend** (port 3000+): serves the playground API, proxies to the compiler
+- **Backend** (port 3000+): serves the playground API, compiles user-submitted Yew apps via `trunk build`
 - **Frontend** (port 8080+): the Yew frontend served by `trunk serve`
 
 Ports auto-increment if already in use.
@@ -25,7 +24,7 @@ Ports auto-increment if already in use.
 | `End` | Jump to bottom |
 | `r` | Restart focused service |
 | `R` | Restart all services |
-| `1` / `2` / `3`  | Copy panel output to clipboard |
+| `1` / `2` | Copy panel output to clipboard |
 | `q` / `Esc` / `Ctrl+C` | Quit |
 
 Mouse hover changes focus. Scroll wheel works. `Shift+drag` for text selection. Each panel also has a clickable "Copy" button to the upper right.

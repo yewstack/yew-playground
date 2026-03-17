@@ -7,13 +7,13 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+use ansi_to_tui::IntoText as _;
 use crossterm::event::{self, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEventKind};
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::Stylize;
-use ansi_to_tui::IntoText as _;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
-use ratatui::Frame;
 use tracing::{debug, info, warn};
 
 fn copy_to_clipboard(text: &str) -> bool {
@@ -38,11 +38,11 @@ fn copy_to_clipboard(text: &str) -> bool {
                 let _ = stdin.write_all(text.as_bytes());
             }
             child.stdin.take(); // close stdin
-            if let Ok(status) = child.wait() {
-                if status.success() {
-                    info!("copied via {cmd}");
-                    return true;
-                }
+            if let Ok(status) = child.wait()
+                && status.success()
+            {
+                info!("copied via {cmd}");
+                return true;
             }
         }
     }
@@ -53,11 +53,12 @@ fn copy_to_clipboard(text: &str) -> bool {
     // \x1b]52;c;<base64>\x07  — OSC 52, clipboard selection "c", ST with BEL
     let osc = format!("\x1b]52;c;{encoded}\x07");
     use io::Write;
-    if let Ok(mut tty) = std::fs::OpenOptions::new().write(true).open("/dev/tty") {
-        if tty.write_all(osc.as_bytes()).is_ok() && tty.flush().is_ok() {
-            info!("copied via OSC 52");
-            return true;
-        }
+    if let Ok(mut tty) = std::fs::OpenOptions::new().write(true).open("/dev/tty")
+        && tty.write_all(osc.as_bytes()).is_ok()
+        && tty.flush().is_ok()
+    {
+        info!("copied via OSC 52");
+        return true;
     }
 
     false
@@ -165,11 +166,7 @@ enum OutputMsg {
     Exited(usize, Option<i32>),
 }
 
-fn pipe_reader(
-    idx: usize,
-    reader: impl io::Read + Send + 'static,
-    tx: mpsc::Sender<OutputMsg>,
-) {
+fn pipe_reader(idx: usize, reader: impl io::Read + Send + 'static, tx: mpsc::Sender<OutputMsg>) {
     thread::spawn(move || {
         use io::BufRead;
         let buf = io::BufReader::new(reader);
@@ -221,11 +218,8 @@ fn spawn_service(
     let tx2 = tx.clone();
     let pid = child.id();
     thread::spawn(move || {
-        // Wait for process exit by polling /proc or just let pipe close handle it.
-        // We detect exit via pipe closure in pipe_reader, but also monitor explicitly.
         loop {
             thread::sleep(Duration::from_millis(500));
-            // Check if process still running
             let status = Command::new("kill")
                 .args(["-0", &pid.to_string()])
                 .stdout(Stdio::null())
@@ -241,78 +235,57 @@ fn spawn_service(
     child
 }
 
-const IDX_COMPILER: usize = 0;
-const IDX_BACKEND: usize = 1;
-const IDX_FRONTEND: usize = 2;
+const IDX_BACKEND: usize = 0;
+const IDX_FRONTEND: usize = 1;
 
 struct App {
-    services: [Service; 3],
+    services: [Service; 2],
     focused: usize,
     rx: mpsc::Receiver<OutputMsg>,
     tx: mpsc::Sender<OutputMsg>,
     project_root: String,
-    panel_rects: [Rect; 3],
-    bottom_rects: [Rect; 3],
+    panel_rects: [Rect; 2],
+    bottom_rects: [Rect; 2],
 }
 
 impl App {
     fn new(project_root: String) -> Self {
         let (tx, rx) = mpsc::channel();
         Self {
-            services: [
-                Service::new("compiler"),
-                Service::new("backend"),
-                Service::new("frontend"),
-            ],
+            services: [Service::new("backend"), Service::new("frontend")],
             focused: 0,
             rx,
             tx,
             project_root,
-            panel_rects: [Rect::default(); 3],
-            bottom_rects: [Rect::default(); 3],
+            panel_rects: [Rect::default(); 2],
+            bottom_rects: [Rect::default(); 2],
         }
     }
 
     fn start_all(&mut self) {
-        let compiler_port = find_open_port(4000);
         let backend_port = find_open_port(3000);
         let frontend_port = find_open_port(8080);
 
-        self.services[IDX_COMPILER].port = compiler_port;
         self.services[IDX_BACKEND].port = backend_port;
         self.services[IDX_FRONTEND].port = frontend_port;
 
-        // Compiler
-        self.services[IDX_COMPILER].push_line(format!(
-            "--- starting compiler on port {compiler_port} ---"
-        ));
+        // Backend (merged with compiler)
+        self.services[IDX_BACKEND]
+            .push_line(format!("--- starting backend on port {backend_port} ---"));
         let app_dir = format!("{}/app", self.project_root);
         let child = spawn_service(
             "cargo",
-            &["run", "--package", "app-compiler"],
             &[
-                ("PORT", compiler_port.to_string()),
-                ("APP_DIR", app_dir),
+                "run",
+                "--package",
+                "backend",
+                "--features",
+                "simulate-delay",
             ],
-            Some(&self.project_root),
-            IDX_COMPILER,
-            &self.tx,
-        );
-        self.services[IDX_COMPILER].child = Some(child);
-
-        // Backend
-        self.services[IDX_BACKEND].push_line(format!(
-            "--- starting backend on port {backend_port} ---"
-        ));
-        let child = spawn_service(
-            "cargo",
-            &["run", "--package", "backend"],
             &[
                 ("PORT", backend_port.to_string()),
-                (
-                    "COMPILER_URL",
-                    format!("http://localhost:{compiler_port}"),
-                ),
+                ("APP_DIR", app_dir),
+                ("SIMULATE_DELAY_SECS", "10".to_string()),
             ],
             Some(&self.project_root),
             IDX_BACKEND,
@@ -321,9 +294,8 @@ impl App {
         self.services[IDX_BACKEND].child = Some(child);
 
         // Frontend: ensure tailwind CSS exists, write dev config, then trunk serve
-        self.services[IDX_FRONTEND].push_line(format!(
-            "--- starting frontend on port {frontend_port} ---"
-        ));
+        self.services[IDX_FRONTEND]
+            .push_line(format!("--- starting frontend on port {frontend_port} ---"));
         let frontend_dir = format!("{}/frontend", self.project_root);
         self.services[IDX_FRONTEND].push_line("--- running npm run build:tailwind ---".into());
         let _ = Command::new("npm")
@@ -379,9 +351,8 @@ impl App {
                     }
                 }
                 OutputMsg::Exited(idx, code) => {
-                    self.services[idx].push_line(format!(
-                        "--- process exited (code: {code:?}) ---"
-                    ));
+                    self.services[idx]
+                        .push_line(format!("--- process exited (code: {code:?}) ---"));
                     self.services[idx].child = None;
                 }
             }
@@ -389,12 +360,11 @@ impl App {
     }
 
     fn draw(&mut self, frame: &mut Frame) {
-        let outer = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)])
-            .split(frame.area());
-        let panels =
-            Layout::vertical([Constraint::Ratio(1, 3); 3]).split(outer[0]);
+        let outer =
+            Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).split(frame.area());
+        let panels = Layout::vertical([Constraint::Ratio(1, 2); 2]).split(outer[0]);
 
-        for i in 0..3 {
+        for i in 0..2 {
             self.panel_rects[i] = panels[i];
             // Top border row where copy button lives (right side)
             self.bottom_rects[i] = Rect {
@@ -424,7 +394,8 @@ impl App {
                 Line::from(vec![
                     Span::raw(format!("{copy_key}")).bold(),
                     Span::raw(" copy ").dim(),
-                ]).right_aligned()
+                ])
+                .right_aligned()
             };
             let border_style = if is_focused {
                 ratatui::style::Style::new().cyan()
@@ -459,7 +430,7 @@ impl App {
             " scroll ".into(),
             " End".bold(),
             " bottom ".into(),
-            " 1/2/3".bold(),
+            " 1/2".bold(),
             " copy ".into(),
             " Shift+drag".bold(),
             " select ".into(),
@@ -474,40 +445,24 @@ impl App {
         self.services[idx].scroll = 0;
 
         match idx {
-            IDX_COMPILER => {
-                let port = find_open_port(4000);
+            IDX_BACKEND => {
+                let port = find_open_port(3000);
                 self.services[idx].port = port;
                 let app_dir = format!("{}/app", self.project_root);
-                self.services[idx]
-                    .push_line(format!("--- restarting compiler on port {port} ---"));
+                self.services[idx].push_line(format!("--- restarting backend on port {port} ---"));
                 let child = spawn_service(
                     "cargo",
-                    &["run", "--package", "app-compiler"],
+                    &[
+                        "run",
+                        "--package",
+                        "backend",
+                        "--features",
+                        "simulate-delay",
+                    ],
                     &[
                         ("PORT", port.to_string()),
                         ("APP_DIR", app_dir),
-                    ],
-                    Some(&self.project_root),
-                    idx,
-                    &self.tx,
-                );
-                self.services[idx].child = Some(child);
-            }
-            IDX_BACKEND => {
-                let compiler_port = self.services[IDX_COMPILER].port;
-                let port = find_open_port(3000);
-                self.services[idx].port = port;
-                self.services[idx]
-                    .push_line(format!("--- restarting backend on port {port} ---"));
-                let child = spawn_service(
-                    "cargo",
-                    &["run", "--package", "backend"],
-                    &[
-                        ("PORT", port.to_string()),
-                        (
-                            "COMPILER_URL",
-                            format!("http://localhost:{compiler_port}"),
-                        ),
+                        ("SIMULATE_DELAY_SECS", "10".to_string()),
                     ],
                     Some(&self.project_root),
                     idx,
@@ -520,8 +475,7 @@ impl App {
                 let port = find_open_port(8080);
                 self.services[idx].port = port;
                 let frontend_dir = format!("{}/frontend", self.project_root);
-                self.services[idx]
-                    .push_line(format!("--- restarting frontend on port {port} ---"));
+                self.services[idx].push_line(format!("--- restarting frontend on port {port} ---"));
                 self.services[idx].push_line("--- running npm run build:tailwind ---".into());
                 let _ = Command::new("npm")
                     .args(["run", "build:tailwind"])
@@ -588,8 +542,9 @@ fn main() -> io::Result<()> {
     let project_root = std::env::var("CARGO_MANIFEST_DIR")
         .map(|d| format!("{d}/.."))
         .unwrap_or_else(|_| ".".to_string());
-    let project_root =
-        std::fs::canonicalize(project_root)?.to_string_lossy().to_string();
+    let project_root = std::fs::canonicalize(project_root)?
+        .to_string_lossy()
+        .to_string();
 
     let mut app = App::new(project_root);
     app.start_all();
@@ -615,7 +570,7 @@ fn main() -> io::Result<()> {
                             let row = mouse.row;
                             debug!(col, row, "mouse click");
                             // Copy button click
-                            for i in 0..3 {
+                            for i in 0..2 {
                                 let r = app.bottom_rects[i];
                                 if row == r.y && col >= r.x && col < r.x + r.width {
                                     let text = app.services[i].plain_content();
@@ -629,7 +584,7 @@ fn main() -> io::Result<()> {
                         }
                         MouseEventKind::Moved | MouseEventKind::Drag(_) => {
                             let row = mouse.row;
-                            for i in 0..3 {
+                            for i in 0..2 {
                                 let r = app.panel_rects[i];
                                 if row >= r.y && row < r.y + r.height {
                                     app.focused = i;
@@ -657,16 +612,12 @@ fn main() -> io::Result<()> {
                     debug!(?code, ?modifiers, "key press");
                     match code {
                         KeyCode::Char('q') | KeyCode::Esc => break,
-                        KeyCode::Char('c')
-                            if modifiers.contains(KeyModifiers::CONTROL) =>
-                        {
-                            break
-                        }
+                        KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => break,
                         KeyCode::Tab => {
-                            app.focused = (app.focused + 1) % 3;
+                            app.focused = (app.focused + 1) % 2;
                         }
                         KeyCode::BackTab => {
-                            app.focused = (app.focused + 2) % 3;
+                            app.focused = (app.focused + 1) % 2;
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
                             app.services[app.focused].scroll_up();
@@ -683,7 +634,7 @@ fn main() -> io::Result<()> {
                         KeyCode::Char('R') => {
                             app.restart_all();
                         }
-                        KeyCode::Char(c @ '1'..='3') => {
+                        KeyCode::Char(c @ '1'..='2') => {
                             let idx = (c as usize) - ('1' as usize);
                             let text = app.services[idx].plain_content();
                             let len = text.len();

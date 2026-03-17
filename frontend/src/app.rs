@@ -1,7 +1,7 @@
 use crate::components::editor::Editor;
 use crate::components::output::OutputContainer;
 use crate::utils::query::Query;
-use crate::{icon, ActionButtonState, ActionButtonStateContext};
+use crate::{ActionButtonState, ActionButtonStateContext, icon};
 use gloo::history::{BrowserHistory, History};
 use split_yew::{Direction, Split};
 use std::rc::Rc;

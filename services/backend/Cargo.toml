@@ -3,19 +3,17 @@ name = "backend"
 version = "0.1.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+simulate-delay = []
 
 [dependencies]
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-tower = { workspace = true }
+tower = { workspace = true, features = ["limit", "timeout"] }
 tracing = { workspace = true }
 anyhow = { workspace = true }
 tower-http = { workspace = true, features = ["trace", "cors"] }
-bson = { workspace = true }
 
-thiserror = "1"
-reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false }
 common = { path = "../common" }

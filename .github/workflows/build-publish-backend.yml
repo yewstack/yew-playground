@@ -1,15 +1,17 @@
-name: Build & Publish Backend
+name: Build & Deploy Playground
 on:
   push:
     branches: [ master ]
     paths:
       - 'services/backend/**'
+      - 'services/common/**'
+      - 'app/**'
       - 'Cargo.*'
       - '.github/workflows/build-publish-backend.yml'
 
 jobs:
-  backend:
-    name: Build & publish backend
+  playground:
+    name: Build & deploy playground
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -52,7 +54,7 @@ jobs:
           service: 'playground-backend'
           region: us-west1
           image: us-docker.pkg.dev/yew-rs/yew-playground/playground:latest
-          flags: '--min-instances=1'
+          flags: '--min-instances=0'
 
       - name: Deploy URL
         run: echo ${{ steps.deploy.outputs.url }}
