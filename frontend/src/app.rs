@@ -12,6 +12,7 @@ use yew::suspense::Suspense;
 pub fn App() -> Html {
     let editor_contents = use_mut_ref(String::new);
     let data = use_state(|| None);
+    let run_count = use_state(|| 0u32);
 
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
@@ -24,8 +25,10 @@ pub fn App() -> Html {
         let split_sizes = split_sizes.clone();
         let output_collapsed = output_collapsed.clone();
         let data = data.clone();
+        let run_count = run_count.clone();
         move |_| {
             data.set(Some(Rc::from(editor_contents.as_ref().borrow().as_str())));
+            run_count.set(*run_count + 1);
             if *output_collapsed {
                 output_collapsed.set(false);
                 split_sizes.set(vec![50.0, 50.0]);
@@ -107,7 +110,7 @@ pub fn App() -> Html {
                 </div>
                 <div class="w-full min-h-0">
                     if let Some(ref data) = *data {
-                        <OutputContainer value={data} />
+                        <OutputContainer value={data} key={*run_count} />
                     }
                 </div>
             </Split>
