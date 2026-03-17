@@ -11,11 +11,13 @@ use yew::suspense::use_future_with;
 #[derive(Properties, PartialEq, Eq)]
 pub struct OutputContainerProps {
     pub value: Rc<str>,
+    pub version: AttrValue,
 }
 
-async fn compile(code: &str) -> String {
+async fn compile(code: &str, version: &str) -> String {
     let query = QueryParams::new();
     query.append("code", code);
+    query.append("version", version);
     let url = format!("{}/run?{}", BACKEND_URL, query);
 
     loop {
@@ -31,8 +33,10 @@ async fn compile(code: &str) -> String {
 pub fn OutputContainer(props: &OutputContainerProps) -> HtmlResult {
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
-    let result = use_future_with(Rc::clone(&props.value), |value| async move {
-        compile(&value).await
+    let value = Rc::clone(&props.value);
+    let version = props.version.clone();
+    let result = use_future_with((value, version), |deps| async move {
+        compile(&deps.0, &deps.1).await
     })?;
 
     {

@@ -3,9 +3,9 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'services/backend/**'
-      - 'services/common/**'
+      - 'backend/**'
       - 'app/**'
+      - 'app-next/**'
       - 'Cargo.*'
       - '.github/workflows/build-publish-backend.yml'
 
@@ -41,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: services/backend/Dockerfile
+          file: backend/Dockerfile
           push: true
           tags: us-docker.pkg.dev/yew-rs/yew-playground/playground:latest
 

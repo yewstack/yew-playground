@@ -1,3 +1,4 @@
+use crate::components::crates::CratesPanel;
 use crate::components::editor::Editor;
 use crate::components::output::{CompileTimer, OutputContainer};
 use crate::utils::query::Query;
@@ -11,8 +12,11 @@ use yew::suspense::Suspense;
 #[component]
 pub fn App() -> Html {
     let editor_contents = use_mut_ref(String::new);
-    let data = use_state(|| None);
+    let data = use_state(|| None::<(Rc<str>, AttrValue)>);
     let run_count = use_state(|| 0u32);
+    let query = crate::utils::query::use_query();
+    let initial_version = query.as_ref().and_then(|q| q.version.as_deref()).unwrap_or("stable");
+    let version = use_state(|| AttrValue::from(initial_version));
 
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
@@ -26,8 +30,9 @@ pub fn App() -> Html {
         let output_collapsed = output_collapsed.clone();
         let data = data.clone();
         let run_count = run_count.clone();
+        let version = version.clone();
         move |_| {
-            data.set(Some(Rc::from(editor_contents.as_ref().borrow().as_str())));
+            data.set(Some((Rc::from(editor_contents.as_ref().borrow().as_str()), (*version).clone())));
             run_count.set(*run_count + 1);
             if *output_collapsed {
                 output_collapsed.set(false);
@@ -40,9 +45,11 @@ pub fn App() -> Html {
     let on_share_click = {
         let editor_contents = editor_contents.clone();
         let action_button_state = action_button_state.clone();
+        let version = version.clone();
         move |_| {
             let action_button_state = action_button_state.clone();
             let editor_contents = editor_contents.clone();
+            let version = version.clone();
 
             // https://tenor.com/view/this-is-fine-fire-house-burning-okay-gif-5263684
             // this is fine because no one can do anuthing with the refcell while we holding it
@@ -56,9 +63,11 @@ pub fn App() -> Html {
                 let content = content.as_str();
                 let paste = crate::api::share::create(content).await.expect("fucked up");
                 let id = paste.id();
+                let ver = if *version == "stable" { None } else { Some((*version).to_string()) };
                 let query = Query {
                     shared: Some(id),
                     code: None,
+                    version: ver,
                 };
                 history
                     .push_with_query("/", query)
@@ -98,7 +107,23 @@ pub fn App() -> Html {
                 </button>
 
                 <div class="flex items-center gap-3">
-                    <span class="text-gray-400 text-sm bg-gray-800 px-2 py-1 rounded">{format!("Yew {}", env!("APP_YEW_VERSION"))}</span>
+                    <div class="flex rounded-md shadow-lg overflow-hidden">
+                        <button onclick={{
+                            let version = version.clone();
+                            move |_| version.set(AttrValue::from("stable"))
+                        }} class={classes!(
+                            "p-3", "text-sm", "cursor-pointer", "rounded-none",
+                            if *version == "stable" { "bg-gray-900 text-gray-200" } else { "bg-gray-800 text-gray-500 hover:bg-gray-700" }
+                        )}>{format!("Yew {}", env!("APP_YEW_VERSION"))}</button>
+                        <button onclick={{
+                            let version = version.clone();
+                            move |_| version.set(AttrValue::from("next"))
+                        }} class={classes!(
+                            "p-3", "text-sm", "cursor-pointer", "rounded-none",
+                            if *version == "next" { "bg-gray-900 text-gray-200" } else { "bg-gray-800 text-gray-500 hover:bg-gray-700" }
+                        )}>{"Yew Next"}</button>
+                    </div>
+                    <CratesPanel version={(*version).clone()} />
                     <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
                 </div>
             </header>
@@ -109,9 +134,9 @@ pub fn App() -> Html {
                     </Suspense>
                 </div>
                 <div class="w-full min-h-0">
-                    if let Some(ref data) = *data {
+                    if let Some((ref code, ref ver)) = *data {
                         <Suspense fallback={html! { <CompileTimer /> }}>
-                            <OutputContainer value={data} key={*run_count} />
+                            <OutputContainer value={code} version={ver} key={*run_count} />
                         </Suspense>
                     }
                 </div>
