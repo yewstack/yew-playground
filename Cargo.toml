@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
 members = [
-    "services/app-compiler",
     "services/backend",
     "services/common",
     "frontend",
@@ -16,8 +15,6 @@ axum = { version = "0.8", features = ["http2"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0"
-bson = "2"
-mime = "0.3"
 thiserror = "1"
 tower = "0.5"
 tower-http = "0.6"

@@ -6,7 +6,7 @@ mod utils;
 use tracing_subscriber::fmt::format::{FmtSpan, Pretty};
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::prelude::*;
-use tracing_web::{performance_layer, MakeConsoleWriter};
+use tracing_web::{MakeConsoleWriter, performance_layer};
 
 use app::App;
 use std::rc::Rc;

@@ -1,7 +1,7 @@
 pub mod query;
 
-use yew::virtual_dom::VNode;
 use yew::Classes;
+use yew::virtual_dom::VNode;
 
 pub fn html_to_element(html: &str, classes: Option<Classes>) -> VNode {
     let div = gloo::utils::document().create_element("div").unwrap();

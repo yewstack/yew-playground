@@ -1,20 +1,23 @@
 use std::sync::LazyLock;
+use std::time::Duration;
 
-use anyhow::{anyhow, Error};
+use anyhow::anyhow;
+use axum::Router;
+use axum::error_handling::HandleErrorLayer;
 use axum::extract::Query;
 use axum::response::Html;
 use axum::routing::get;
-use axum::Router;
-use errors::ApiError;
-use reqwest::Client;
-use response::Bson;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use tokio::fs;
 use tokio::net::TcpListener;
+use tokio::process::Command;
+use tower::ServiceBuilder;
+use tower::limit::GlobalConcurrencyLimitLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 
-use common::response;
-use common::{errors, init_tracing};
+use common::errors::{ApiError, timeout_or_500};
+use common::init_tracing;
 
 static PORT: LazyLock<u16> = LazyLock::new(|| {
     std::env::var("PORT")
@@ -22,20 +25,14 @@ static PORT: LazyLock<u16> = LazyLock::new(|| {
         .and_then(|it| it.parse().ok())
         .unwrap_or(3000)
 });
-static COMPILER_URL: LazyLock<String> =
-    LazyLock::new(|| std::env::var("COMPILER_URL").expect("COMPILER_URL must be set"));
-static CLIENT: LazyLock<Client> = LazyLock::new(Client::new);
+static APP_DIR: LazyLock<String> =
+    LazyLock::new(|| std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string()));
+static TRUNK_BIN: LazyLock<String> =
+    LazyLock::new(|| std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string()));
 
 #[derive(Deserialize)]
 struct RunPayload {
     code: String,
-}
-
-#[derive(Serialize)]
-struct RunResponse {
-    index_html: String,
-    js: String,
-    wasm: Vec<u8>,
 }
 
 const INDEX_HTML: &str = r#"
@@ -57,98 +54,115 @@ const INDEX_HTML: &str = r#"
 "#;
 
 async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
-    let client = &*CLIENT;
+    if body.code.is_empty() {
+        return Err(ApiError::NoBody);
+    }
 
-    let res = client
-        .post(format!("{}/run", *COMPILER_URL))
-        .body(body.code)
-        .send()
+    #[cfg(feature = "simulate-delay")]
+    {
+        let delay: u64 = std::env::var("SIMULATE_DELAY_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(5);
+        info!(delay, "simulating cold start delay");
+        tokio::time::sleep(Duration::from_secs(delay)).await;
+    }
+
+    let app_dir = fs::canonicalize(&*APP_DIR).await.map_err(|e| {
+        error!(?e, "failed to canonicalize app_dir path");
+        ApiError::IoError(e)
+    })?;
+
+    fs::write(app_dir.join("src/main.rs"), &body.code)
         .await
-        .map_err(Error::from)?;
-
-    let status = res.status();
-    debug!(status = ?status, "got response from compiler");
-
-    if !status.is_success() {
-        return Err(ApiError::Unknown(
-            anyhow!("Compiler service returned an error: {}", res.text().await.unwrap())
-        ))
-    }
-
-    let run_response: common::Response = {
-        let bytes = res.bytes().await.map_err(|e| {
-            error!(?e, "failed to get bytes from compiler response");
-            ApiError::Unknown(e.into())
+        .map_err(|e| {
+            error!(?e, "failed to write main.rs");
+            ApiError::IoError(e)
         })?;
-        bson::from_slice(&bytes).map_err(|e| {
-            error!(?e, "failed to deserialize compiler response");
-            ApiError::BsonDeserializeError(e)
-        })?
-    };
 
+    let mut cmd = Command::new(&*TRUNK_BIN);
+    let cmd = cmd
+        .arg("--config")
+        .arg(app_dir.join("Trunk.toml"))
+        .arg("build")
+        .kill_on_drop(true);
+    debug!(?cmd, "running command");
 
-    match run_response {
-        common::Response::Output {
-            index_html: _,
-            js,
-            wasm,
-        } => {
-            debug!(wasm_bytes = wasm.len(), "compilation successful");
-            // Handle both old format: `export default __wbg_init;`
-            // and new format: `export { initSync, __wbg_init as default };`
-            let init_fn = js
-                .split("export default")
-                .nth(1)
-                .and_then(|it| it.trim().strip_suffix(";"))
-                .or_else(|| {
-                    // new wasm-bindgen: `export { ..., __name as default };`
-                    js.lines()
-                        .rev()
-                        .find_map(|line| {
-                            let line = line.trim();
-                            let line = line.strip_prefix("export")?;
-                            let line = line.trim().strip_prefix('{')?;
-                            let line = line.trim().strip_suffix("};")?;
-                            line.split(',')
-                                .find_map(|part| {
-                                    let part = part.trim();
-                                    part.strip_suffix("as default")
-                                        .map(|name| name.trim())
-                                })
-                        })
-                });
-            match init_fn {
-                Some(init_fn) => {
-                    let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
-                    let init = format!("{}((new Int8Array({:?})).buffer)", init_fn, wasm);
-                    let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
+    let output = cmd.output().await.map_err(|e| {
+        error!(?e, "running trunk failed");
+        ApiError::IoError(e)
+    })?;
 
-                    Ok(Html(index_html))
-                }
-                None => {
-                    Err(ApiError::Unknown(anyhow!("failed to find init function as default export in js")))
-                }
-            }
-        }
-        common::Response::CompileError(e) => Ok(Html(e)),
+    if !output.status.success() {
+        return Ok(Html(String::from_utf8_lossy(&output.stderr).to_string()));
     }
-}
 
-async fn hello() -> Bson<RunResponse> {
-    Bson(RunResponse {
-        index_html: "index_html".to_string(),
-        js: "js".to_string(),
-        wasm: "wasm".as_bytes().to_vec(),
-    })
+    let dist = app_dir.join("dist");
+    let js = fs::read_to_string(dist.join("app.js")).await.map_err(|e| {
+        error!(?e, "failed to read app.js");
+        ApiError::IoError(e)
+    })?;
+    let wasm = fs::read(dist.join("app_bg.wasm")).await.map_err(|e| {
+        error!(?e, "failed to read app_bg.wasm");
+        ApiError::IoError(e)
+    })?;
+
+    debug!(wasm_bytes = wasm.len(), "compilation successful");
+
+    let init_fn = js
+        .split("export default")
+        .nth(1)
+        .and_then(|it| it.trim().strip_suffix(";"))
+        .or_else(|| {
+            js.lines().rev().find_map(|line| {
+                let line = line.trim();
+                let line = line.strip_prefix("export")?;
+                let line = line.trim().strip_prefix('{')?;
+                let line = line.trim().strip_suffix("};")?;
+                line.split(',').find_map(|part| {
+                    let part = part.trim();
+                    part.strip_suffix("as default").map(|name| name.trim())
+                })
+            })
+        });
+
+    match init_fn {
+        Some(init_fn) => {
+            let index_html = INDEX_HTML.replace("/*JS_GOES_HERE*/", &js);
+            let init = format!("{}((new Int8Array({:?})).buffer)", init_fn, wasm);
+            let index_html = index_html.replace("/*INIT_GOES_HERE*/", &init);
+            Ok(Html(index_html))
+        }
+        None => Err(ApiError::Unknown(anyhow!(
+            "failed to find init function as default export in js"
+        ))),
+    }
 }
 
 #[tokio::main]
 async fn main() {
     init_tracing();
 
+    let app_dir = &*APP_DIR;
+    let trunk_path = &*TRUNK_BIN;
+    debug!(?app_dir);
+
+    let trunk_version = Command::new(trunk_path)
+        .arg("--version")
+        .output()
+        .await
+        .map(|v| String::from_utf8_lossy(&v.stdout).trim().to_string())
+        .unwrap_or_else(|_| "failed to get trunk version".to_string());
+    debug!(trunk_bin_path = ?trunk_path, trunk_version = ?trunk_version);
+
     let api = Router::new()
-        .route("/hello", get(hello))
         .route("/run", get(run))
+        .layer(
+            ServiceBuilder::new()
+                .layer(HandleErrorLayer::new(timeout_or_500))
+                .timeout(Duration::from_secs(60)),
+        )
+        .layer(GlobalConcurrencyLimitLayer::new(1))
         .layer(TraceLayer::new_for_http());
 
     let app = Router::new().nest("/api", api);
