@@ -17,8 +17,10 @@ use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{debug, error, info};
 
-use common::errors::{ApiError, timeout_or_500};
-use common::init_tracing;
+mod errors;
+
+use errors::{ApiError, timeout_or_500};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 static PORT: LazyLock<u16> = LazyLock::new(|| {
     std::env::var("PORT")
@@ -26,14 +28,26 @@ static PORT: LazyLock<u16> = LazyLock::new(|| {
         .and_then(|it| it.parse().ok())
         .unwrap_or(3000)
 });
-static APP_DIR: LazyLock<String> =
-    LazyLock::new(|| std::env::var("APP_DIR").unwrap_or_else(|_| "../../app".to_string()));
+static APP_DIR_STABLE: LazyLock<String> =
+    LazyLock::new(|| std::env::var("APP_DIR_STABLE").unwrap_or_else(|_| "../app".to_string()));
+static APP_DIR_NEXT: LazyLock<String> =
+    LazyLock::new(|| std::env::var("APP_DIR_NEXT").unwrap_or_else(|_| "../app-next".to_string()));
 static TRUNK_BIN: LazyLock<String> =
     LazyLock::new(|| std::env::var("TRUNK_BIN").unwrap_or_else(|_| "trunk".to_string()));
+
+#[derive(Deserialize, Default, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+enum YewVersion {
+    #[default]
+    Stable,
+    Next,
+}
 
 #[derive(Deserialize)]
 struct RunPayload {
     code: String,
+    #[serde(default)]
+    version: YewVersion,
 }
 
 const INDEX_HTML: &str = r#"
@@ -69,7 +83,11 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
         tokio::time::sleep(Duration::from_secs(delay)).await;
     }
 
-    let app_dir = fs::canonicalize(&*APP_DIR).await.map_err(|e| {
+    let app_dir_str = match body.version {
+        YewVersion::Stable => &*APP_DIR_STABLE,
+        YewVersion::Next => &*APP_DIR_NEXT,
+    };
+    let app_dir = fs::canonicalize(app_dir_str).await.map_err(|e| {
         error!(?e, "failed to canonicalize app_dir path");
         ApiError::IoError(e)
     })?;
@@ -83,6 +101,8 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
 
     let mut cmd = Command::new(&*TRUNK_BIN);
     let cmd = cmd
+        .arg("--color")
+        .arg("always")
         .arg("--config")
         .arg(app_dir.join("Trunk.toml"))
         .arg("build")
@@ -144,11 +164,18 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
 
 #[tokio::main]
 async fn main() {
-    init_tracing();
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG")
+                .unwrap_or_else(|_| "backend=trace,hyper=debug,tower_http=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer().with_ansi(std::env::var("NO_ANSI_LOG").is_err()))
+        .init();
 
-    let app_dir = &*APP_DIR;
+    let app_dir_stable = &*APP_DIR_STABLE;
+    let app_dir_next = &*APP_DIR_NEXT;
     let trunk_path = &*TRUNK_BIN;
-    debug!(?app_dir);
+    debug!(?app_dir_stable, ?app_dir_next);
 
     let trunk_version = Command::new(trunk_path)
         .arg("--version")

@@ -272,7 +272,8 @@ impl App {
         // Backend (merged with compiler)
         self.services[IDX_BACKEND]
             .push_line(format!("--- starting backend on port {backend_port} ---"));
-        let app_dir = format!("{}/app", self.project_root);
+        let app_dir_stable = format!("{}/app", self.project_root);
+        let app_dir_next = format!("{}/app-next", self.project_root);
         let child = spawn_service(
             "cargo",
             &[
@@ -284,7 +285,8 @@ impl App {
             ],
             &[
                 ("PORT", backend_port.to_string()),
-                ("APP_DIR", app_dir),
+                ("APP_DIR_STABLE", app_dir_stable),
+                ("APP_DIR_NEXT", app_dir_next),
                 ("SIMULATE_DELAY_SECS", "3".to_string()),
             ],
             Some(&self.project_root),
@@ -448,7 +450,8 @@ impl App {
             IDX_BACKEND => {
                 let port = find_open_port(3000);
                 self.services[idx].port = port;
-                let app_dir = format!("{}/app", self.project_root);
+                let app_dir_stable = format!("{}/app", self.project_root);
+                let app_dir_next = format!("{}/app-next", self.project_root);
                 self.services[idx].push_line(format!("--- restarting backend on port {port} ---"));
                 let child = spawn_service(
                     "cargo",
@@ -461,7 +464,8 @@ impl App {
                     ],
                     &[
                         ("PORT", port.to_string()),
-                        ("APP_DIR", app_dir),
+                        ("APP_DIR_STABLE", app_dir_stable),
+                        ("APP_DIR_NEXT", app_dir_next),
                         ("SIMULATE_DELAY_SECS", "10".to_string()),
                     ],
                     Some(&self.project_root),

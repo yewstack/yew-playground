@@ -1,13 +1,13 @@
 [workspace]
 resolver = "3"
 members = [
-    "services/backend",
-    "services/common",
+    "backend",
     "frontend",
     "devtool",
 ]
 exclude = [
-    "app" # app must NOT be part of the workspace. It needs to have it's own target directory and lock file
+    "app", # app templates must NOT be part of the workspace. They need their own target directory and lock file
+    "app-next",
 ]
 
 # for rust-monaco

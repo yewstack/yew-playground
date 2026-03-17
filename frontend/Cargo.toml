@@ -35,3 +35,4 @@ split-yew = { git = "https://github.com/Madoshakalaka/split-yew", branch = "yew-
 
 [build-dependencies]
 toml = "0.8"
+serde_json = "1"
