@@ -14,12 +14,10 @@ pub const STABLE_SNIPPETS: &[Snippet] = &[
     },
 ];
 
-pub const NEXT_SNIPPETS: &[Snippet] = &[
-    Snippet {
-        name: "Hello World",
-        code: include_str!("../../app-next/snippets/hello_world.rs"),
-    },
-];
+pub const NEXT_SNIPPETS: &[Snippet] = &[Snippet {
+    name: "Hello World",
+    code: include_str!("../../app-next/snippets/hello_world.rs"),
+}];
 
 pub fn snippets_for(version: &str) -> &'static [Snippet] {
     if version == "next" {

@@ -37,10 +37,7 @@ fn main() {
         "cargo:rustc-env=APP_DEPS_STABLE={}",
         extract_deps(&stable_toml)
     );
-    println!(
-        "cargo:rustc-env=APP_DEPS_NEXT={}",
-        extract_deps(&next_toml)
-    );
+    println!("cargo:rustc-env=APP_DEPS_NEXT={}", extract_deps(&next_toml));
     println!("cargo::rerun-if-changed=../app/Cargo.toml");
     println!("cargo::rerun-if-changed=../app-next/Cargo.toml");
     println!("cargo::rerun-if-changed=../app/snippets");

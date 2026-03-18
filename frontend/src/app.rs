@@ -16,7 +16,10 @@ pub fn App() -> Html {
     let data = use_state(|| None::<(Rc<str>, AttrValue)>);
     let run_count = use_state(|| 0u32);
     let query = crate::utils::query::use_query();
-    let initial_version = query.as_ref().and_then(|q| q.version.as_deref()).unwrap_or("stable");
+    let initial_version = query
+        .as_ref()
+        .and_then(|q| q.version.as_deref())
+        .unwrap_or("stable");
     let version = use_state(|| AttrValue::from(initial_version));
 
     let snippet_code = use_state(|| None::<AttrValue>);
@@ -35,7 +38,10 @@ pub fn App() -> Html {
         let run_count = run_count.clone();
         let version = version.clone();
         move |_| {
-            data.set(Some((Rc::from(editor_contents.as_ref().borrow().as_str()), (*version).clone())));
+            data.set(Some((
+                Rc::from(editor_contents.as_ref().borrow().as_str()),
+                (*version).clone(),
+            )));
             run_count.set(*run_count + 1);
             if *output_collapsed {
                 output_collapsed.set(false);
@@ -66,7 +72,11 @@ pub fn App() -> Html {
                 let content = content.as_str();
                 let paste = crate::api::share::create(content).await.expect("fucked up");
                 let id = paste.id();
-                let ver = if *version == "stable" { None } else { Some((*version).to_string()) };
+                let ver = if *version == "stable" {
+                    None
+                } else {
+                    Some((*version).to_string())
+                };
                 let query = Query {
                     shared: Some(id),
                     code: None,
