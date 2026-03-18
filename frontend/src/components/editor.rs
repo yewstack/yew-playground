@@ -73,7 +73,6 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
         let modal = modal.clone();
         let cb = props.oninput.clone();
         use_effect_with(modal, move |modal| {
-            log!("we got called");
             let modal2 = modal.clone();
             cb.emit(modal2.get_value());
             let disposable = modal.on_did_change_content(move |_| {
