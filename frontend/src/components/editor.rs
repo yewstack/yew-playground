@@ -10,18 +10,7 @@ use yew::HtmlResult;
 use yew::prelude::*;
 use yew::suspense::use_future_with;
 
-const BASE_CONTENT: &str = r#"
-use yew::prelude::*;
-
-#[component]
-fn App() -> Html {
-    html! { "hello world" }
-}
-
-fn main() {
-    yew::Renderer::<App>::new().render();
-}
-"#;
+const BASE_CONTENT: &str = crate::snippets::STABLE_SNIPPETS[0].code;
 
 rc_type!(TextContent => Option<Result<String>>);
 
@@ -44,6 +33,8 @@ fn get_options() -> CodeEditorOptions {
 #[derive(PartialEq, Properties)]
 pub struct EditorProps {
     pub oninput: Callback<String>,
+    #[prop_or_default]
+    pub snippet_code: Option<AttrValue>,
 }
 
 #[component]
@@ -91,6 +82,16 @@ pub fn Editor(props: &EditorProps) -> HtmlResult {
 
             move || drop(disposable)
         })
+    }
+
+    {
+        let modal = modal.clone();
+        let snippet_code = props.snippet_code.clone();
+        use_effect_with(snippet_code, move |code| {
+            if let Some(code) = code {
+                modal.set_value(code);
+            }
+        });
     }
 
     Ok(html! {

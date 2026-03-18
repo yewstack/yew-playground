@@ -2,6 +2,7 @@ mod api;
 mod app;
 mod components;
 mod macros;
+pub mod snippets;
 mod utils;
 use tracing_subscriber::fmt::format::{FmtSpan, Pretty};
 use tracing_subscriber::fmt::time::UtcTime;

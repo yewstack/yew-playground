@@ -1,6 +1,7 @@
 use crate::components::crates::CratesPanel;
 use crate::components::editor::Editor;
 use crate::components::output::{CompileTimer, OutputContainer};
+use crate::components::snippets::SnippetPicker;
 use crate::utils::query::Query;
 use crate::{ActionButtonState, ActionButtonStateContext, icon};
 use gloo::history::{BrowserHistory, History};
@@ -17,6 +18,8 @@ pub fn App() -> Html {
     let query = crate::utils::query::use_query();
     let initial_version = query.as_ref().and_then(|q| q.version.as_deref()).unwrap_or("stable");
     let version = use_state(|| AttrValue::from(initial_version));
+
+    let snippet_code = use_state(|| None::<AttrValue>);
 
     let action_button_state = use_context::<ActionButtonStateContext>().unwrap();
 
@@ -55,7 +58,7 @@ pub fn App() -> Html {
             // this is fine because no one can do anuthing with the refcell while we holding it
             // alternate is clone, which is expensive
             #[allow(clippy::await_holding_refcell_ref)]
-            wasm_bindgen_futures::spawn_local(async move {
+            yew::platform::spawn_local(async move {
                 action_button_state.dispatch(ActionButtonState::Disabled);
                 let history = BrowserHistory::new();
 
@@ -84,7 +87,7 @@ pub fn App() -> Html {
     };
 
     let mut classes = Classes::from(
-        "p-3 text-center shadow-lg bg-gray-800 rounded-md flex items-center gap-2 \
+        "p-3 text-sm text-center shadow-lg bg-gray-800 rounded-md flex items-center gap-2 \
     transition duration-200 ease-in-out disabled:cursor-not-allowed disabled:bg-gray-700",
     );
     if !action_button_state.disabled() {
@@ -96,15 +99,26 @@ pub fn App() -> Html {
     html! {
         <div class="flex flex-col h-screen">
             <header class="bg-gray-700 p-3 flex justify-between">
-                <button onclick={on_run_click} disabled={action_button_state.disabled()} class={&classes}>
-                    if action_button_state.disabled() {
-                        <span class="animate-spin inline-block w-5 h-5 border-2 border-gray-200 border-t-transparent rounded-full"></span>
-                        {"Running..."}
-                    } else {
-                        {icon!("play_arrow", classes!("fill-gray-200"))}
-                        {"Run"}
-                    }
-                </button>
+                <div class="flex items-center gap-3">
+                    <button onclick={on_run_click} disabled={action_button_state.disabled()} class={&classes}>
+                        if action_button_state.disabled() {
+                            <span class="animate-spin inline-block w-4 h-4 border-2 border-gray-200 border-t-transparent rounded-full"></span>
+                            {"Running..."}
+                        } else {
+                            {icon!("play_arrow", classes!("fill-gray-200", "w-4", "h-4"))}
+                            {"Run"}
+                        }
+                    </button>
+                    <SnippetPicker
+                        version={&*version}
+                        on_select={{
+                            let snippet_code = snippet_code.clone();
+                            move |code: &'static str| {
+                                snippet_code.set(Some(AttrValue::from(code)));
+                            }
+                        }}
+                    />
+                </div>
 
                 <div class="flex items-center gap-3">
                     <div class="flex rounded-md shadow-lg overflow-hidden">
@@ -124,13 +138,13 @@ pub fn App() -> Html {
                         )}>{"Yew Next"}</button>
                     </div>
                     <CratesPanel version={&*version} />
-                    <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200"))} {"Share"}</button>
+                    <button onclick={on_share_click} disabled={action_button_state.disabled()} class={classes}>{icon!("share", classes!("fill-gray-200", "w-4", "h-4"))} {"Share"}</button>
                 </div>
             </header>
             <Split min_sizes={vec![100.0, 0.0]} sizes={(*split_sizes).clone()} collapsed={collapsed_split} direction={Direction::Vertical} class="flex flex-col flex-grow overflow-hidden">
                 <div>
                     <Suspense fallback={{html! {"loading..."}}}>
-                        <Editor {oninput} />
+                        <Editor {oninput} snippet_code={(*snippet_code).clone()} />
                     </Suspense>
                 </div>
                 <div class="w-full min-h-0">

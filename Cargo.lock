@@ -553,7 +553,6 @@ dependencies = [
  "tracing-subscriber",
  "tracing-web",
  "wasm-bindgen",
- "wasm-bindgen-futures",
  "web-sys",
  "yew",
  "yew-router",

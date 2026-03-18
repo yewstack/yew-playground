@@ -11,18 +11,34 @@ COPY Cargo.* ./
 RUN cargo build --package backend --release \
     && strip /build/target/release/backend
 
-# Pre-build stable app dependencies for fast cold starts
+# Pre-build stable app dependencies and verify snippets compile
 WORKDIR /app
 COPY ./app .
 RUN cargo build --target wasm32-unknown-unknown --release
 RUN trunk build
+RUN cp src/main.rs src/main.rs.default && \
+    for f in snippets/*.rs; do \
+        [ -f "$f" ] || continue; \
+        echo "--- compiling snippet: $f ---" && \
+        cp "$f" src/main.rs && \
+        trunk build || exit 1; \
+    done && \
+    cp src/main.rs.default src/main.rs
 RUN rm -rf /app/dist
 
-# Pre-build next app dependencies
+# Pre-build next app dependencies and verify snippets compile
 WORKDIR /app-next
 COPY ./app-next .
 RUN cargo build --target wasm32-unknown-unknown --release
 RUN trunk build
+RUN cp src/main.rs src/main.rs.default && \
+    for f in snippets/*.rs; do \
+        [ -f "$f" ] || continue; \
+        echo "--- compiling snippet: $f ---" && \
+        cp "$f" src/main.rs && \
+        trunk build || exit 1; \
+    done && \
+    cp src/main.rs.default src/main.rs
 RUN rm -rf /app-next/dist
 
 # --- Runtime stage: slim base, only what's needed ---

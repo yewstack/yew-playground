@@ -36,11 +36,11 @@ pub fn CratesPanel(props: &CratesPanelProps) -> Html {
                 <span class="text-xs">{if *open { "▲" } else { "▼" }}</span>
             </button>
             if *open {
-                <div class="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-md shadow-xl p-3 min-w-[200px]">
+                <div class="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-md shadow-xl p-3 w-max">
                     <div class="text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">{"Available Crates"}</div>
                     <div class="flex flex-col gap-1">
                         for (name, ver) in deps {
-                            <div class="flex justify-between gap-4 text-sm">
+                            <div class="flex justify-between gap-4 text-sm whitespace-nowrap">
                                 <span class="text-gray-200 font-mono">{name}</span>
                                 <span class="text-gray-500 font-mono">{ver}</span>
                             </div>

@@ -43,4 +43,5 @@ fn main() {
     );
     println!("cargo::rerun-if-changed=../app/Cargo.toml");
     println!("cargo::rerun-if-changed=../app-next/Cargo.toml");
+    println!("cargo::rerun-if-changed=../app/snippets");
 }
