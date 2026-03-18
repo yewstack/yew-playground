@@ -2,20 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Yew Playground</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yew Playground - Write, compile and run Yew apps in the browser</title>
+    <meta name="description" content="An interactive playground for the Yew framework. Write Rust code, compile to WebAssembly, and see the result instantly in your browser.">
+
+    <link rel="canonical" href="https://play.yew.rs/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://play.yew.rs/">
+    <meta property="og:title" content="Yew Playground">
+    <meta property="og:description" content="Write, compile and run Yew apps in the browser. An interactive playground for the Yew Rust web framework.">
+    <meta property="og:image" content="https://play.yew.rs/static/og-image.webp">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Yew Playground">
+    <meta name="twitter:description" content="Write, compile and run Yew apps in the browser. An interactive playground for the Yew Rust web framework.">
+    <meta name="twitter:image" content="https://play.yew.rs/static/og-image.webp">
 
     <link data-trunk href="styles/tailwind.css" rel="css">
-    <!--We don't use ref="icon" with data-trunk because we want svg favicon-->
     <link data-trunk href="static" rel="copy-dir">
     <link rel="icon" href="/static/favicon.ico" sizes="any">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-	<script type="importmap">
-		{
-			"imports": {
-				"split.js": "https://unpkg.com/split.js@1.6.5/dist/split.es.js"
-			}
-		}
-	</script>
+    <script type="importmap">
+        {
+            "imports": {
+                "split.js": "https://unpkg.com/split.js@1.6.5/dist/split.es.js"
+            }
+        }
+    </script>
 </head>
 <body class="text-gray-200 h-screen"></body>
 </html>
