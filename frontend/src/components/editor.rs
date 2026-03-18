@@ -1,7 +1,6 @@
 use crate::rc_type;
 use crate::utils::query::use_query;
 use anyhow::Result;
-use gloo::console::log;
 use monaco::api::TextModel;
 use monaco::yew::CodeEditor;
 use monaco::{api::CodeEditorOptions, sys::editor::BuiltinTheme};
