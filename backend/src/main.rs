@@ -101,6 +101,7 @@ async fn run(Query(body): Query<RunPayload>) -> Result<Html<String>, ApiError> {
 
     let mut cmd = Command::new(&*TRUNK_BIN);
     let cmd = cmd
+        .env("CARGO_TERM_COLOR", "always")
         .arg("--color")
         .arg("always")
         .arg("--config")
